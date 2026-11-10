@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MomentRepository extends JpaRepository<Moment, Long> {
 
 	List<Moment> findByFamilyIdOrderByCreatedAtDesc(Long familyId);
+
+	long countByFamilyId(Long familyId);
 }
 

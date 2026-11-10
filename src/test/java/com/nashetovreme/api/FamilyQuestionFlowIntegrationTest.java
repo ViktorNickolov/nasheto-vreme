@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
+import static org.hamcrest.Matchers.hasItems;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -137,6 +138,30 @@ class FamilyQuestionFlowIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.fileName").isNotEmpty())
                 .andExpect(jsonPath("$.relativePath").value(org.hamcrest.Matchers.startsWith("uploads/images/")));
+
+        mockMvc.perform(get("/api/v1/timeline")
+                        .param("familyId", String.valueOf(familyId))
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].type", hasItems("MOMENT", "ANSWER")));
+
+        String exportPayload = """
+                {
+                  "familyId": %d,
+                  "period": "monthly",
+                  "style": "family-story",
+                  "includeMoments": true,
+                  "includeAnswers": true
+                }
+                """.formatted(familyId);
+
+        mockMvc.perform(post("/api/v1/exports/pdf")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(exportPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PREVIEW_READY"))
+                .andExpect(jsonPath("$.familyId").value(familyId));
     }
 }
 

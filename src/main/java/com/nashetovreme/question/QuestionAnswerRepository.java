@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface QuestionAnswerRepository extends JpaRepository<QuestionAnswer, Long> {
 
     List<QuestionAnswer> findByFamilyIdOrderByCreatedAtDesc(Long familyId);
+
+    long countByFamilyId(Long familyId);
 }
 
