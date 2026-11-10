@@ -1,0 +1,61 @@
+# Nasheto Vreme Backend (Foundation)
+
+Foundation setup for the MVP backend of "Нашето време".
+
+## Included in Foundation
+
+- Spring Boot 3.5.x + Java 21
+- PostgreSQL + Flyway migrations
+- Dockerfile + docker-compose for local DB
+- Actuator health endpoint
+- OpenAPI/Swagger UI
+- Base JPA entity with audit fields
+- Global exception handler
+- Security starter + baseline filter chain
+- Starter package structure for next modules
+
+## Project Structure
+
+```text
+src/main/java/com/nashetovreme
+├── common
+├── config
+├── exception
+├── family
+├── moment
+├── question
+├── security
+├── shared
+└── user
+```
+
+## Endpoints
+
+- Health: `GET /actuator/health`
+- Swagger UI: `GET /swagger-ui.html`
+- OpenAPI JSON: `GET /v3/api-docs`
+
+## Run Locally
+
+1. Start PostgreSQL:
+
+    ```bash
+    docker compose up -d
+    ```
+
+2. Run the backend:
+
+    ```bash
+    mvn spring-boot:run
+    ```
+
+## Build and Test
+
+```bash
+mvn clean test
+mvn clean package
+```
+
+## Next Step
+
+After Foundation, implement `Auth` module (JWT register/login), then continue with `Family`, `Questions`, `Moments`, `Uploads`, and `Timeline`.
