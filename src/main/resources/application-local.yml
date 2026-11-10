@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/nasheto_vreme
     username: postgres
-    password: postgres
+    password: admin
   jpa:
     show-sql: true
   flyway:
@@ -13,4 +13,6 @@ app:
     secret: bXktc3VwZXItc2VjcmV0LWtleS1mb3Itand0LXNpZ25pbmctMjAyNg==
     access-token-ttl: 15m
     refresh-token-ttl: 7d
+  upload:
+    base-dir: uploads/images
 

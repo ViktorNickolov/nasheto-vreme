@@ -65,6 +65,8 @@ public class QuestionService {
     public QuestionAnswerResponse answerQuestion(Long questionId,
                                                  CreateQuestionAnswerRequest request,
                                                  AuthenticatedUser principal) {
+        verifyFamilyAccess(request.familyId(), principal);
+
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
         Family family = familyRepository.findById(request.familyId())
@@ -82,7 +84,9 @@ public class QuestionService {
     }
 
     @Transactional(readOnly = true)
-    public List<QuestionAnswerResponse> getFamilyAnswers(Long familyId) {
+    public List<QuestionAnswerResponse> getFamilyAnswers(Long familyId, AuthenticatedUser principal) {
+        verifyFamilyAccess(familyId, principal);
+
         if (!familyRepository.existsById(familyId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Family not found");
         }
@@ -114,6 +118,12 @@ public class QuestionService {
                 answer.getAnswerText(),
                 answer.getCreatedAt()
         );
+    }
+
+    private void verifyFamilyAccess(Long requestedFamilyId, AuthenticatedUser principal) {
+        if (principal.getFamilyId() == null || !principal.getFamilyId().equals(requestedFamilyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this family");
+        }
     }
 }
 

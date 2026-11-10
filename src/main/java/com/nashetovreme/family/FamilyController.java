@@ -30,18 +30,22 @@ public class FamilyController {
     }
 
     @GetMapping("/{id}")
-    public FamilyResponse getFamily(@PathVariable Long id) {
-        return familyService.getFamily(id);
+    public FamilyResponse getFamily(@PathVariable Long id,
+                                    @AuthenticationPrincipal AuthenticatedUser user) {
+        return familyService.getFamily(id, user);
     }
 
     @PostMapping("/{id}/members")
-    public FamilyMemberResponse addMember(@PathVariable Long id, @Valid @RequestBody AddFamilyMemberRequest request) {
-        return familyService.addMember(id, request);
+    public FamilyMemberResponse addMember(@PathVariable Long id,
+                                          @Valid @RequestBody AddFamilyMemberRequest request,
+                                          @AuthenticationPrincipal AuthenticatedUser user) {
+        return familyService.addMember(id, request, user);
     }
 
     @GetMapping("/{id}/members")
-    public List<FamilyMemberResponse> listMembers(@PathVariable Long id) {
-        return familyService.listMembers(id);
+    public List<FamilyMemberResponse> listMembers(@PathVariable Long id,
+                                                   @AuthenticationPrincipal AuthenticatedUser user) {
+        return familyService.listMembers(id, user);
     }
 }
 

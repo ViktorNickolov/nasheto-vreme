@@ -7,6 +7,7 @@ import com.nashetovreme.family.dto.FamilyResponse;
 import com.nashetovreme.security.AuthenticatedUser;
 import com.nashetovreme.user.User;
 import com.nashetovreme.user.UserRepository;
+import com.nashetovreme.user.UserRole;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -47,14 +48,23 @@ public class FamilyService {
     }
 
     @Transactional(readOnly = true)
-    public FamilyResponse getFamily(Long familyId) {
+    public FamilyResponse getFamily(Long familyId, AuthenticatedUser principal) {
+        verifyFamilyAccess(familyId, principal);
         Family family = familyRepository.findById(familyId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Family not found"));
         return toFamilyResponse(family);
     }
 
     @Transactional
-    public FamilyMemberResponse addMember(Long familyId, AddFamilyMemberRequest request) {
+    public FamilyMemberResponse addMember(Long familyId, AddFamilyMemberRequest request, AuthenticatedUser principal) {
+        verifyFamilyAccess(familyId, principal);
+
+        User actor = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (actor.getRole() != UserRole.PARENT) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only parents can manage family members");
+        }
+
         Family family = familyRepository.findById(familyId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Family not found"));
         User user = userRepository.findById(request.userId())
@@ -62,6 +72,10 @@ public class FamilyService {
 
         if (familyMemberRepository.existsByFamilyIdAndUserId(familyId, request.userId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already in family");
+        }
+
+        if (user.getFamily() != null && !user.getFamily().getId().equals(familyId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User belongs to another family");
         }
 
         FamilyMember member = new FamilyMember();
@@ -80,7 +94,8 @@ public class FamilyService {
     }
 
     @Transactional(readOnly = true)
-    public List<FamilyMemberResponse> listMembers(Long familyId) {
+    public List<FamilyMemberResponse> listMembers(Long familyId, AuthenticatedUser principal) {
+        verifyFamilyAccess(familyId, principal);
         if (!familyRepository.existsById(familyId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Family not found");
         }
@@ -106,6 +121,12 @@ public class FamilyService {
                 member.getRole().name(),
                 member.getJoinedAt()
         );
+    }
+
+    private void verifyFamilyAccess(Long requestedFamilyId, AuthenticatedUser principal) {
+        if (principal.getFamilyId() == null || !principal.getFamilyId().equals(requestedFamilyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this family");
+        }
     }
 }
 

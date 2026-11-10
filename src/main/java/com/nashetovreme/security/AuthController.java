@@ -7,12 +7,14 @@ import com.nashetovreme.security.dto.RegisterRequest;
 import com.nashetovreme.security.dto.UserProfileResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -38,6 +40,9 @@ public class AuthController {
 
     @GetMapping("/me")
     public UserProfileResponse me(@AuthenticationPrincipal AuthenticatedUser user) {
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
         return authService.getProfileByEmail(user.getUsername());
     }
 }

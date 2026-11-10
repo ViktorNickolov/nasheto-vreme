@@ -47,8 +47,9 @@ public class QuestionController {
     }
 
     @GetMapping("/families/{id}/answers")
-    public List<QuestionAnswerResponse> getFamilyAnswers(@PathVariable Long id) {
-        return questionService.getFamilyAnswers(id);
+    public List<QuestionAnswerResponse> getFamilyAnswers(@PathVariable Long id,
+                                                         @AuthenticationPrincipal AuthenticatedUser user) {
+        return questionService.getFamilyAnswers(id, user);
     }
 }
 
