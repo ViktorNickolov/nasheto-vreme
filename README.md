@@ -1,20 +1,32 @@
-# Nasheto Vreme - Full Stack Docker Run
+# Nasheto Vreme - Full Stack Workspace
 
-This workspace contains:
+This repository is organized as a small monorepo and contains:
 
-- `nasheto-vreme-backend` (Spring Boot, PostgreSQL, Flyway)
-- `nasheto-vreme-frontend` (static frontend served by Nginx)
+- `nasheto-vreme-backend` - Spring Boot API (Java 21, PostgreSQL, Flyway)
+- `nasheto-vreme-frontend` - static frontend served by Nginx/http-server
+- root-level Docker Compose files for local and runtime deployments
 
-## Run everything with Docker Compose
+## Project structure
 
-Build backend jar first:
+```text
+.
+|-- nasheto-vreme-backend/
+|-- nasheto-vreme-frontend/
+|-- docker-compose.yml
+|-- docker-compose.runtime.yml
+`-- .env.runtime.example
+```
+
+## Run everything with Docker Compose (local)
+
+Build backend JAR first:
 
 ```bash
 cd "C:/Users/t1t_vgnikolov/Desktop/nasheto-vreme/nasheto-vreme-backend"
 mvn -DskipTests clean package
 ```
 
-Then start all containers:
+Start all containers:
 
 ```bash
 cd "C:/Users/t1t_vgnikolov/Desktop/nasheto-vreme"
@@ -41,7 +53,7 @@ docker compose down -v
 docker compose up --build
 ```
 
-## Run on another machine (without source build)
+## Runtime deployment (prebuilt images)
 
 Use prebuilt images and the runtime compose file:
 
@@ -61,3 +73,9 @@ Stop runtime stack:
 docker compose --env-file .env.runtime -f docker-compose.runtime.yml down
 ```
 
+## CI
+
+GitHub Actions workflow is in `.github/workflows/ci.yml` and validates:
+
+- backend build and tests (`mvn test`)
+- frontend smoke test (`npm test`)
