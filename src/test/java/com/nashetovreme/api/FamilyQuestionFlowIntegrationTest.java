@@ -2,6 +2,7 @@ package com.nashetovreme.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -162,6 +163,30 @@ class FamilyQuestionFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PREVIEW_READY"))
                 .andExpect(jsonPath("$.familyId").value(familyId));
+
+        byte[] pdf = mockMvc.perform(post("/api/v1/exports/pdf/download")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(exportPayload))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String contentType = result.getResponse().getContentType();
+                    if (!MediaType.APPLICATION_PDF_VALUE.equals(contentType)) {
+                        throw new AssertionError("Expected application/pdf but was " + contentType);
+                    }
+                    String disposition = result.getResponse().getHeader("Content-Disposition");
+                    if (disposition == null || !disposition.contains("attachment")) {
+                        throw new AssertionError("Missing attachment header");
+                    }
+                })
+                .andReturn()
+                .getResponse()
+                .getContentAsByteArray();
+
+        String pdfHeader = new String(pdf, 0, Math.min(pdf.length, 4), StandardCharsets.US_ASCII);
+        if (!"%PDF".equals(pdfHeader)) {
+            throw new AssertionError("Invalid PDF header");
+        }
     }
 }
 
