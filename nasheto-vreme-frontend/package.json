@@ -5,6 +5,7 @@
   "description": "React proof-of-concept frontend for Nasheto Vreme backend APIs",
   "type": "module",
   "scripts": {
+    "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 5173",

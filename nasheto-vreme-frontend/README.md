@@ -1,20 +1,18 @@
-# Nasheto Vreme Frontend (React)
+# Nasheto Vreme Frontend (Local)
 
-React + Vite frontend for the Nasheto Vreme backend API.
+Minimal local frontend that works with the backend API.
 
 ## What it supports
 
-- Register / login / refresh token / me
+- Register / login / refresh / me
 - Get question of the day
-- Create answer and load family answers
+- Create answer
 - Create and list moments
 - Upload image
-- Load family timeline
-- Generate and download PDF book
 
 ## Requirements
 
-- Node.js 20+
+- Node.js (installed)
 - Running backend on `http://localhost:8088`
 
 ## Run locally
@@ -23,24 +21,21 @@ React + Vite frontend for the Nasheto Vreme backend API.
 cd "C:/Users/t1t_vgnikolov/Desktop/nasheto-vreme/nasheto-vreme-frontend"
 npm install
 npm test
-npm run dev
+npm start
 ```
 
 Open:
 
 - `http://localhost:5173`
 
-## Build production assets
-
-```bash
-npm run build
-npm run preview
-```
-
 ## Backend note
 
-Default API base URL:
+This frontend expects backend API base URL:
 
 - `http://localhost:8088/api/v1`
 
-You can change it in the sidebar of the app.
+You can change it in the page from **Backend Config**.
+
+
+
+
