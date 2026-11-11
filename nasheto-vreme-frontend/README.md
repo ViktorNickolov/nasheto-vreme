@@ -1,14 +1,16 @@
-# Nasheto Vreme Frontend (React POC)
+# Nasheto Vreme Frontend (React)
 
-React proof-of-concept frontend that integrates with the backend API.
+React + Vite frontend for the Nasheto Vreme backend API.
 
-## What this POC supports
+## What it supports
 
-- Register / login
-- API base URL configuration
-- Load current profile (`/auth/me`)
-- Load question of the day (`/questions/today`)
-- Logout
+- Register / login / refresh token / me
+- Get question of the day
+- Create answer and load family answers
+- Create and list moments
+- Upload image
+- Load family timeline
+- Generate and download PDF book
 
 ## Requirements
 
@@ -41,4 +43,4 @@ Default API base URL:
 
 - `http://localhost:8088/api/v1`
 
-You can change it from the app sidebar.
+You can change it in the sidebar of the app.

@@ -18,10 +18,20 @@ assert(html.includes("src=\"/src/main.jsx\""), "vite entrypoint is missing");
 const appJsx = read("src/App.jsx");
 assert(appJsx.includes("id=\"authScreen\""), "auth screen is missing");
 assert(appJsx.includes("id=\"appScreen\""), "app screen is missing");
-assert(appJsx.includes("loginForm"), "login form is missing");
-assert(appJsx.includes("registerForm"), "register form is missing");
-assert(appJsx.includes("getTodayQuestion"), "today question action is missing");
-assert(appJsx.includes("setApiBaseUrl"), "api base url configuration is missing");
-assert(appJsx.includes("Logout"), "logout action is missing");
+assert(appJsx.includes("id=\"loginForm\""), "login form is missing");
+assert(appJsx.includes("id=\"registerForm\""), "register form is missing");
+assert(appJsx.includes("id=\"answerForm\""), "answer form is missing");
+assert(appJsx.includes("id=\"createMomentForm\""), "moments form is missing");
+assert(appJsx.includes("id=\"uploadForm\""), "upload form is missing");
+assert(appJsx.includes("id=\"pdfExportForm\""), "pdf export form is missing");
+assert(appJsx.includes("id=\"downloadPdfBtn\""), "pdf download action is missing");
+assert(appJsx.includes("id=\"loadTimelineBtn\""), "timeline action is missing");
+
+assert(appJsx.includes("createPdfPreview"), "pdf preview API action is missing");
+assert(appJsx.includes("downloadPdfBook"), "pdf download API action is missing");
+assert(appJsx.includes("getTodayQuestion"), "today question API action is missing");
+assert(appJsx.includes("answerQuestion"), "answer API action is missing");
+assert(appJsx.includes("createMoment"), "create moment API action is missing");
+assert(appJsx.includes("uploadImage"), "upload image API action is missing");
 
 console.log("Smoke tests passed.");
