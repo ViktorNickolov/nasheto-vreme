@@ -1,0 +1,13 @@
+{
+  "name": "nasheto-vreme-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local frontend for Nasheto Vreme backend APIs",
+  "scripts": {
+    "start": "http-server . -p 5173 -c-1",
+    "test": "node tests/smoke.test.js"
+  },
+  "dependencies": {
+    "http-server": "14.1.1"
+  }
+}

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nasheto Vreme</title>
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <section id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="brand-row">
+        <div class="brand-mark">NV</div>
+        <div>
+          <h1>Nasheto Vreme</h1>
+          <p class="small-muted">Family space for moments and conversations</p>
+        </div>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="showLoginBtn" class="active" type="button">Login</button>
+        <button id="showRegisterBtn" type="button">Register</button>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="password" type="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+
+      <form id="registerForm" class="auth-form hidden">
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="password" type="password" placeholder="Password" required />
+        <input name="firstName" type="text" placeholder="First name" required />
+        <input name="lastName" type="text" placeholder="Last name" required />
+        <input name="familyName" type="text" placeholder="Family name" required />
+        <button type="submit">Create account</button>
+      </form>
+
+      <p id="authInfo" class="small-muted"></p>
+    </div>
+  </section>
+
+  <section id="appScreen" class="shell hidden">
+    <aside class="sidebar">
+      <div class="brand-row">
+        <div class="brand-mark">NV</div>
+        <div>
+          <strong>Nasheto Vreme</strong>
+          <p class="small-muted">Family dashboard</p>
+        </div>
+      </div>
+
+      <form id="configForm" class="config-form">
+        <label for="apiBaseUrl">API Base URL</label>
+        <input id="apiBaseUrl" type="text" placeholder="http://localhost:8088/api/v1" />
+        <button type="submit">Save</button>
+      </form>
+
+      <div class="user-meta">
+        <p id="profileInfo">Not loaded</p>
+        <button id="meBtn" type="button">Refresh profile</button>
+        <button id="refreshBtn" type="button">Refresh token</button>
+        <button id="logoutBtn" type="button" class="secondary">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <h2>Welcome back</h2>
+        <p id="configInfo" class="small-muted"></p>
+      </div>
+
+      <section class="card soft">
+        <h3>Your profile</h3>
+        <div id="profileCard" class="info-grid"></div>
+      </section>
+
+      <section class="card">
+        <div class="cardhead">
+          <h3>Your family</h3>
+          <button id="loadFamilyBtn" type="button">Refresh</button>
+        </div>
+        <div id="familyCard" class="info-grid"></div>
+        <div id="membersList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="cardhead">
+          <h3>Question for today</h3>
+          <button id="todayQuestionBtn" type="button">Load</button>
+        </div>
+        <p id="todayQuestionText" class="question-box">Press "Load" to get today's question.</p>
+        <form id="answerForm" class="grid2">
+          <input name="questionId" type="number" placeholder="Question ID" required />
+          <input name="answerText" type="text" placeholder="Answer text" required />
+          <button type="submit">Send answer</button>
+        </form>
+        <div class="cardhead compact">
+          <h3>Family answers</h3>
+          <button id="loadAnswersBtn" type="button">Load</button>
+        </div>
+        <div id="answersList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="cardhead">
+          <h3>Family moments</h3>
+          <button id="listMomentsBtn" type="button">Load</button>
+        </div>
+        <form id="createMomentForm" class="grid2">
+          <input name="title" type="text" placeholder="Title" required />
+          <input name="description" type="text" placeholder="Description" />
+          <input name="imageUrl" type="text" placeholder="Image URL" />
+          <button type="submit">Create moment</button>
+        </form>
+        <div id="momentsList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <h3>Upload image</h3>
+        <form id="uploadForm" class="row" enctype="multipart/form-data">
+          <input name="file" type="file" accept="image/*" required />
+          <button type="submit">Upload</button>
+        </form>
+        <div id="uploadResult" class="small-muted"></div>
+      </section>
+
+      <section class="card">
+        <div class="cardhead">
+          <h3>Family timeline</h3>
+          <button id="loadTimelineBtn" type="button">Load</button>
+        </div>
+        <div id="timelineList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <h3>Family PDF book (preview)</h3>
+        <form id="pdfExportForm" class="grid2">
+          <input name="period" type="text" value="monthly" placeholder="Period (monthly/yearly/custom)" required />
+          <input name="style" type="text" value="family-story" placeholder="Style" required />
+          <label><input name="includeMoments" type="checkbox" checked /> Include moments</label>
+          <label><input name="includeAnswers" type="checkbox" checked /> Include answers</label>
+          <button type="submit">Generate preview</button>
+        </form>
+        <button id="downloadPdfBtn" type="button">Download PDF</button>
+        <div id="pdfPreviewCard" class="info-grid"></div>
+      </section>
+
+      <section class="card">
+        <h3>Debug output</h3>
+        <pre id="output">Ready.</pre>
+      </section>
+    </main>
+  </section>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
+
+

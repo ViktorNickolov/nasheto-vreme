@@ -1,7 +1,9 @@
-target/
 .idea/
 *.iml
 *.log
 .env
 tmp_zip/
 *.zip
+nasheto-vreme-backend/target/
+nasheto-vreme-frontend/node_modules/
+nasheto-vreme-frontend/dist/

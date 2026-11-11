@@ -1,61 +1,63 @@
-# Nasheto Vreme Backend (Foundation)
+# Nasheto Vreme - Full Stack Docker Run
 
-Foundation setup for the MVP backend of "Нашето време".
+This workspace contains:
 
-## Included in Foundation
+- `nasheto-vreme-backend` (Spring Boot, PostgreSQL, Flyway)
+- `nasheto-vreme-frontend` (static frontend served by Nginx)
 
-- Spring Boot 3.5.x + Java 21
-- PostgreSQL + Flyway migrations
-- Dockerfile + docker-compose for local DB
-- Actuator health endpoint
-- OpenAPI/Swagger UI
-- Base JPA entity with audit fields
-- Global exception handler
-- Security starter + baseline filter chain
-- Starter package structure for next modules
+## Run everything with Docker Compose
 
-## Project Structure
-
-```text
-src/main/java/com/nashetovreme
-├── common
-├── config
-├── exception
-├── family
-├── moment
-├── question
-├── security
-├── shared
-└── user
-```
-
-## Endpoints
-
-- Health: `GET /actuator/health`
-- Swagger UI: `GET /swagger-ui.html`
-- OpenAPI JSON: `GET /v3/api-docs`
-
-## Run Locally
-
-1. Start PostgreSQL:
-
-    ```bash
-    docker compose up -d
-    ```
-
-2. Run the backend:
-
-    ```bash
-    mvn spring-boot:run
-    ```
-
-## Build and Test
+Build backend jar first:
 
 ```bash
-mvn clean test
-mvn clean package
+cd "C:/Users/t1t_vgnikolov/Desktop/nasheto-vreme/nasheto-vreme-backend"
+mvn -DskipTests clean package
 ```
 
-## Next Step
+Then start all containers:
 
-After Foundation, implement `Auth` module (JWT register/login), then continue with `Family`, `Questions`, `Moments`, `Uploads`, and `Timeline`.
+```bash
+cd "C:/Users/t1t_vgnikolov/Desktop/nasheto-vreme"
+docker compose up --build
+```
+
+## Service URLs
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8088`
+- Swagger: `http://localhost:8088/swagger-ui.html`
+- PostgreSQL: `localhost:5432`
+
+## Stop and remove containers
+
+```bash
+docker compose down
+```
+
+## Reset database volume (fresh seed/migrations)
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+## Run on another machine (without source build)
+
+Use prebuilt images and the runtime compose file:
+
+1. Copy `docker-compose.runtime.yml` and `.env.runtime.example`.
+2. Create `.env.runtime` from `.env.runtime.example` and set image names.
+3. Start runtime stack.
+
+```bash
+cd "<your-folder>"
+cp .env.runtime.example .env.runtime
+docker compose --env-file .env.runtime -f docker-compose.runtime.yml up -d
+```
+
+Stop runtime stack:
+
+```bash
+docker compose --env-file .env.runtime -f docker-compose.runtime.yml down
+```
+

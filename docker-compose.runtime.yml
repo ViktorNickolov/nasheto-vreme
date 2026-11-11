@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: nv-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nasheto_vreme}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-nasheto_vreme}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: ${BACKEND_IMAGE:-your-docker-user/nasheto-vreme-backend:latest}
+    container_name: nv-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-nasheto_vreme}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-bXktc3VwZXItc2VjcmV0LWtleS1mb3Itand0LXNpZ25pbmctMjAyNg==}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8088}:8088"
+    restart: unless-stopped
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-your-docker-user/nasheto-vreme-frontend:latest}
+    container_name: nv-frontend
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+
