@@ -3,7 +3,7 @@
 This repository is organized as a small monorepo and contains:
 
 - `nasheto-vreme-backend` - Spring Boot API (Java 21, PostgreSQL, Flyway)
-- `nasheto-vreme-frontend` - static frontend served by Nginx/http-server
+- `nasheto-vreme-frontend` - React + Vite frontend (served by Nginx in Docker)
 - root-level Docker Compose files for local and runtime deployments
 
 ## Project structure

@@ -1,7 +1,10 @@
-const fs = require("fs");
-const path = require("path");
-const assert = require("assert");
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert";
+import { fileURLToPath } from "node:url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, "..");
 
 function read(file) {
@@ -9,23 +12,26 @@ function read(file) {
 }
 
 const html = read("index.html");
-assert(html.includes("id=\"authScreen\""), "auth screen is missing");
-assert(html.includes("id=\"appScreen\""), "app screen is missing");
-assert(html.includes("id=\"loginForm\""), "login form is missing");
-assert(html.includes("id=\"registerForm\""), "register form is missing");
-assert(html.includes("id=\"uploadForm\""), "upload form is missing");
-assert(html.includes("id=\"loadTimelineBtn\""), "timeline button is missing");
-assert(html.includes("id=\"pdfExportForm\""), "pdf export form is missing");
-assert(html.includes("id=\"downloadPdfBtn\""), "pdf download button is missing");
+assert(html.includes("id=\"root\""), "react root container is missing");
+assert(html.includes("src=\"/src/main.jsx\""), "vite entrypoint is missing");
 
-const mainJs = read("src/main.js");
-assert(mainJs.includes("renderScreenByAuth"), "auth/app screen toggling is missing");
-assert(mainJs.includes("logoutBtn"), "logout handler is missing");
-assert(mainJs.includes("todayQuestionBtn"), "today question action is missing");
-assert(mainJs.includes("createMomentForm"), "moments action is missing");
-assert(mainJs.includes("loadTimeline"), "timeline loader is missing");
-assert(mainJs.includes("createPdfPreview"), "pdf preview action is missing");
-assert(mainJs.includes("downloadPdfBook"), "pdf download action is missing");
+const appJsx = read("src/App.jsx");
+assert(appJsx.includes("id=\"authScreen\""), "auth screen is missing");
+assert(appJsx.includes("id=\"appScreen\""), "app screen is missing");
+assert(appJsx.includes("id=\"loginForm\""), "login form is missing");
+assert(appJsx.includes("id=\"registerForm\""), "register form is missing");
+assert(appJsx.includes("id=\"answerForm\""), "answer form is missing");
+assert(appJsx.includes("id=\"createMomentForm\""), "moments form is missing");
+assert(appJsx.includes("id=\"uploadForm\""), "upload form is missing");
+assert(appJsx.includes("id=\"pdfExportForm\""), "pdf export form is missing");
+assert(appJsx.includes("id=\"downloadPdfBtn\""), "pdf download action is missing");
+assert(appJsx.includes("id=\"loadTimelineBtn\""), "timeline action is missing");
+
+assert(appJsx.includes("createPdfPreview"), "pdf preview API action is missing");
+assert(appJsx.includes("downloadPdfBook"), "pdf download API action is missing");
+assert(appJsx.includes("getTodayQuestion"), "today question API action is missing");
+assert(appJsx.includes("answerQuestion"), "answer API action is missing");
+assert(appJsx.includes("createMoment"), "create moment API action is missing");
+assert(appJsx.includes("uploadImage"), "upload image API action is missing");
 
 console.log("Smoke tests passed.");
-
