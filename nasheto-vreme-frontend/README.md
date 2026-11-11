@@ -1,18 +1,18 @@
-# Nasheto Vreme Frontend (Local)
+# Nasheto Vreme Frontend (React POC)
 
-Minimal local frontend that works with the backend API.
+React proof-of-concept frontend that integrates with the backend API.
 
-## What it supports
+## What this POC supports
 
-- Register / login / refresh / me
-- Get question of the day
-- Create answer
-- Create and list moments
-- Upload image
+- Register / login
+- API base URL configuration
+- Load current profile (`/auth/me`)
+- Load question of the day (`/questions/today`)
+- Logout
 
 ## Requirements
 
-- Node.js (installed)
+- Node.js 20+
 - Running backend on `http://localhost:8088`
 
 ## Run locally
@@ -21,19 +21,24 @@ Minimal local frontend that works with the backend API.
 cd "C:/Users/t1t_vgnikolov/Desktop/nasheto-vreme/nasheto-vreme-frontend"
 npm install
 npm test
-npm start
+npm run dev
 ```
 
 Open:
 
 - `http://localhost:5173`
 
+## Build production assets
+
+```bash
+npm run build
+npm run preview
+```
+
 ## Backend note
 
-This frontend expects backend API base URL:
+Default API base URL:
 
 - `http://localhost:8088/api/v1`
 
-You can change it in the page from **Backend Config**.
-
-
+You can change it from the app sidebar.
