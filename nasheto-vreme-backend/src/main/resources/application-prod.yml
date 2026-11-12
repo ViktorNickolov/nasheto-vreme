@@ -15,8 +15,15 @@ app:
     refresh-token-ttl: ${APP_JWT_REFRESH_TOKEN_TTL:7d}
   cors:
     allowed-origins: ${APP_CORS_ORIGINS}
+  auth:
+    refresh-cookie:
+      name: ${APP_REFRESH_COOKIE_NAME:nv_refresh_token}
+      path: ${APP_REFRESH_COOKIE_PATH:/api/v1/auth}
+      same-site: ${APP_REFRESH_COOKIE_SAME_SITE:Lax}
+      secure: ${APP_REFRESH_COOKIE_SECURE:true}
   upload:
     base-dir: ${APP_UPLOAD_BASE_DIR:uploads/images}
+    max-file-size-bytes: ${APP_UPLOAD_MAX_FILE_SIZE_BYTES:5242880}
 
 logging:
   level:

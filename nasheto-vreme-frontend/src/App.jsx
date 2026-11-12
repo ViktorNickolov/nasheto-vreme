@@ -14,6 +14,7 @@ import {
   getTodayQuestion,
   listMoments,
   login,
+  logoutSession,
   me,
   refreshToken,
   register,
@@ -214,6 +215,7 @@ export default function App() {
   }
 
   function logout() {
+    logoutSession().catch(() => null);
     clearAuth();
     setAuthState(null);
     resetDashboardState();

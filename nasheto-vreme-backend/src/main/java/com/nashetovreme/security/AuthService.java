@@ -6,7 +6,6 @@ import com.nashetovreme.family.FamilyMemberRepository;
 import com.nashetovreme.family.FamilyRepository;
 import com.nashetovreme.security.dto.AuthResponse;
 import com.nashetovreme.security.dto.LoginRequest;
-import com.nashetovreme.security.dto.RefreshTokenRequest;
 import com.nashetovreme.security.dto.RegisterRequest;
 import com.nashetovreme.security.dto.UserProfileResponse;
 import com.nashetovreme.user.User;
@@ -19,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -79,10 +79,14 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public AuthResponse refresh(RefreshTokenRequest request) {
+    public AuthResponse refresh(String refreshToken) {
+        if (!StringUtils.hasText(refreshToken)) {
+            throw invalidCredentials();
+        }
+
         String email;
         try {
-            email = jwtService.extractSubject(request.refreshToken());
+            email = jwtService.extractSubject(refreshToken);
         } catch (JwtException ex) {
             throw invalidCredentials();
         }
@@ -90,7 +94,7 @@ public class AuthService {
         User user = userRepository.findByEmail(normalizeEmail(email))
                 .orElseThrow(AuthService::invalidCredentials);
 
-        if (!jwtService.isRefreshTokenValid(request.refreshToken(), user.getEmail())) {
+        if (!jwtService.isRefreshTokenValid(refreshToken, user.getEmail())) {
             throw invalidCredentials();
         }
 

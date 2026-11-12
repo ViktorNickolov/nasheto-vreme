@@ -2,6 +2,7 @@ package com.nashetovreme.security;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -44,9 +45,10 @@ class AuthControllerIntegrationTest {
                         .content(registerPayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isEmpty())
                 .andExpect(jsonPath("$.user.email").value("parent@example.com"))
                 .andExpect(jsonPath("$.user.role").value("PARENT"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", org.hamcrest.Matchers.containsString("nv_refresh_token=")))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -61,15 +63,18 @@ class AuthControllerIntegrationTest {
                 }
                 """;
 
-        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
+        var loginResult = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginPayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(jsonPath("$.refreshToken").isEmpty())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Set-Cookie", org.hamcrest.Matchers.containsString("HttpOnly")))
+                .andReturn();
+
+        String loginResponse = loginResult.getResponse().getContentAsString();
+        Cookie refreshCookie = loginResult.getResponse().getCookie("nv_refresh_token");
+        assertThat(refreshCookie).isNotNull();
 
         String token = objectMapper.readTree(loginResponse).get("accessToken").asText();
 
@@ -79,18 +84,11 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.email").value("parent@example.com"))
                 .andExpect(jsonPath("$.familyName").value("Petrovi Family"));
 
-        String refreshPayload = """
-                {
-                  "refreshToken": "%s"
-                }
-                """.formatted(objectMapper.readTree(loginResponse).get("refreshToken").asText());
-
         mockMvc.perform(post("/api/v1/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(refreshPayload))
+                        .cookie(refreshCookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                .andExpect(jsonPath("$.refreshToken").isEmpty());
     }
 
     @Test

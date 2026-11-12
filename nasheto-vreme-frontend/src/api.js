@@ -1,5 +1,7 @@
-const TOKEN_KEY = "nv_auth";
 const API_URL_KEY = "nv_api_base";
+const API_TIMEOUT_MS = 10000;
+
+let authState = null;
 
 export function getApiBaseUrl() {
   return localStorage.getItem(API_URL_KEY) || "http://localhost:8088/api/v1";
@@ -10,16 +12,21 @@ export function setApiBaseUrl(url) {
 }
 
 export function getAuth() {
-  const raw = localStorage.getItem(TOKEN_KEY);
-  return raw ? JSON.parse(raw) : null;
+  return authState;
 }
 
 export function setAuth(payload) {
-  localStorage.setItem(TOKEN_KEY, JSON.stringify(payload));
+  authState = payload
+    ? {
+        accessToken: payload.accessToken,
+        accessTokenExpiresAt: payload.accessTokenExpiresAt,
+        user: payload.user
+      }
+    : null;
 }
 
 export function clearAuth() {
-  localStorage.removeItem(TOKEN_KEY);
+  authState = null;
 }
 
 function authHeader() {
@@ -28,8 +35,9 @@ function authHeader() {
 }
 
 async function api(path, options = {}) {
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+  const response = await fetchWithTimeout(`${getApiBaseUrl()}${path}`, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...authHeader(),
@@ -37,14 +45,44 @@ async function api(path, options = {}) {
     }
   });
 
-  const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
+  const body = await parseJsonBody(response);
 
   if (!response.ok) {
     throw new Error(body?.message || `${response.status} ${response.statusText}`);
   }
 
   return body;
+}
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function parseJsonBody(response) {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("Server returned invalid JSON response.");
+  }
 }
 
 export function register(payload) {
@@ -62,14 +100,16 @@ export function login(payload) {
 }
 
 export function refreshToken() {
-  const auth = getAuth();
-  if (!auth?.refreshToken) {
-    throw new Error("No refresh token available.");
-  }
-
   return api("/auth/refresh", {
     method: "POST",
-    body: JSON.stringify({ refreshToken: auth.refreshToken })
+    body: "{}"
+  });
+}
+
+export function logoutSession() {
+  return api("/auth/logout", {
+    method: "POST",
+    body: "{}"
   });
 }
 
@@ -131,16 +171,16 @@ export async function uploadImage(familyId, file) {
   formData.append("familyId", String(familyId));
   formData.append("file", file);
 
-  const response = await fetch(`${getApiBaseUrl()}/uploads/images`, {
+  const response = await fetchWithTimeout(`${getApiBaseUrl()}/uploads/images`, {
     method: "POST",
+    credentials: "include",
     headers: {
       ...authHeader()
     },
     body: formData
   });
 
-  const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
+  const body = await parseJsonBody(response);
 
   if (!response.ok) {
     throw new Error(body?.message || `${response.status} ${response.statusText}`);
@@ -150,8 +190,9 @@ export async function uploadImage(familyId, file) {
 }
 
 export async function downloadPdfBook(payload) {
-  const response = await fetch(`${getApiBaseUrl()}/exports/pdf/download`, {
+  const response = await fetchWithTimeout(`${getApiBaseUrl()}/exports/pdf/download`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...authHeader()
@@ -160,8 +201,7 @@ export async function downloadPdfBook(payload) {
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    const body = text ? JSON.parse(text) : null;
+    const body = await parseJsonBody(response);
     throw new Error(body?.message || `${response.status} ${response.statusText}`);
   }
 

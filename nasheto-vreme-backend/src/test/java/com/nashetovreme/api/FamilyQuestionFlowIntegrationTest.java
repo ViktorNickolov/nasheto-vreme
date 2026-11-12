@@ -129,7 +129,14 @@ class FamilyQuestionFlowIntegrationTest {
                 "file",
                 "family-photo.jpg",
                 "image/jpeg",
-                "demo-image-content".getBytes()
+                new byte[]{
+                        (byte) 0xFF,
+                        (byte) 0xD8,
+                        (byte) 0xFF,
+                        0x00,
+                        0x11,
+                        0x22
+                }
         );
 
         mockMvc.perform(multipart("/api/v1/uploads/images")
