@@ -145,7 +145,11 @@ class AuthControllerIntegrationTest {
                 .getContentAsString();
 
         String validToken = objectMapper.readTree(registerResponse).get("accessToken").asText();
-        String tamperedToken = validToken.substring(0, validToken.length() - 1) + "x";
+        String[] parts = validToken.split("\\.");
+        assertThat(parts).hasSize(3);
+        char[] signature = parts[2].toCharArray();
+        signature[0] = signature[0] == 'a' ? 'b' : 'a';
+        String tamperedToken = parts[0] + "." + parts[1] + "." + new String(signature);
 
         mockMvc.perform(get("/api/v1/auth/me")
                         .header("Authorization", "Bearer " + tamperedToken))
