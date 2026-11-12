@@ -32,6 +32,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Validate NVD API key
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "NVD_API_KEY secret is missing or empty. Add it in Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
           cache: npm
           cache-dependency-path: nasheto-vreme-frontend/package-lock.json
 
@@ -66,9 +75,12 @@ jobs:
           npm audit --audit-level=high
 
       - name: Backend dependency check (CVSS >= 7 fails)
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           mvn -B -f nasheto-vreme-backend/pom.xml \
             org.owasp:dependency-check-maven:check \
+            -DnvdApiKey="$NVD_API_KEY" \
             -DfailBuildOnCVSS=7 \
             -Dformats=HTML,JSON \
             -DskipTestScope=true
