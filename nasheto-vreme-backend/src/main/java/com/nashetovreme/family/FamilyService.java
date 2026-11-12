@@ -5,6 +5,7 @@ import com.nashetovreme.family.dto.CreateFamilyRequest;
 import com.nashetovreme.family.dto.FamilyMemberResponse;
 import com.nashetovreme.family.dto.FamilyResponse;
 import com.nashetovreme.security.AuthenticatedUser;
+import com.nashetovreme.shared.audit.AuditEventLogger;
 import com.nashetovreme.user.User;
 import com.nashetovreme.user.UserRepository;
 import com.nashetovreme.user.UserRole;
@@ -23,6 +24,7 @@ public class FamilyService {
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
     private final UserRepository userRepository;
+    private final AuditEventLogger auditEventLogger;
 
     @Transactional
     public FamilyResponse createFamily(CreateFamilyRequest request, AuthenticatedUser principal) {
@@ -125,6 +127,12 @@ public class FamilyService {
 
     private void verifyFamilyAccess(Long requestedFamilyId, AuthenticatedUser principal) {
         if (principal.getFamilyId() == null || !principal.getFamilyId().equals(requestedFamilyId)) {
+            auditEventLogger.familyAccessDenied(
+                    "family",
+                    principal.getId(),
+                    principal.getFamilyId(),
+                    requestedFamilyId
+            );
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this family");
         }
     }

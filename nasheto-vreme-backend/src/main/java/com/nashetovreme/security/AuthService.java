@@ -8,6 +8,7 @@ import com.nashetovreme.security.dto.AuthResponse;
 import com.nashetovreme.security.dto.LoginRequest;
 import com.nashetovreme.security.dto.RegisterRequest;
 import com.nashetovreme.security.dto.UserProfileResponse;
+import com.nashetovreme.shared.audit.AuditEventLogger;
 import com.nashetovreme.user.User;
 import com.nashetovreme.user.UserRepository;
 import com.nashetovreme.user.UserRole;
@@ -30,11 +31,13 @@ public class AuthService {
     private final FamilyMemberRepository familyMemberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuditEventLogger auditEventLogger;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.email());
         if (userRepository.existsByEmail(email)) {
+            auditEventLogger.authFailure("register", email, "email_already_in_use");
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
 
@@ -69,9 +72,13 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> invalidCredentials());
+                .orElseThrow(() -> {
+                    auditEventLogger.authFailure("login", email, "user_not_found");
+                    return invalidCredentials();
+                });
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            auditEventLogger.authFailure("login", email, "invalid_password");
             throw invalidCredentials();
         }
 
@@ -81,6 +88,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
         if (!StringUtils.hasText(refreshToken)) {
+            auditEventLogger.authFailure("refresh", "unknown", "missing_refresh_token");
             throw invalidCredentials();
         }
 
@@ -88,13 +96,18 @@ public class AuthService {
         try {
             email = jwtService.extractSubject(refreshToken);
         } catch (JwtException ex) {
+            auditEventLogger.authFailure("refresh", "unknown", "invalid_token_subject");
             throw invalidCredentials();
         }
 
         User user = userRepository.findByEmail(normalizeEmail(email))
-                .orElseThrow(AuthService::invalidCredentials);
+                .orElseThrow(() -> {
+                    auditEventLogger.authFailure("refresh", normalizeEmail(email), "user_not_found");
+                    return invalidCredentials();
+                });
 
         if (!jwtService.isRefreshTokenValid(refreshToken, user.getEmail())) {
+            auditEventLogger.authFailure("refresh", user.getEmail(), "invalid_refresh_token");
             throw invalidCredentials();
         }
 

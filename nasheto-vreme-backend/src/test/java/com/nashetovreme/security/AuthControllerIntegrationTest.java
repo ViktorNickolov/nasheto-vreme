@@ -94,7 +94,9 @@ class AuthControllerIntegrationTest {
     @Test
     void meWithoutTokenIsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/auth/me"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("X-Frame-Options", "DENY"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("X-Content-Type-Options", "nosniff"));
     }
 
     @Test

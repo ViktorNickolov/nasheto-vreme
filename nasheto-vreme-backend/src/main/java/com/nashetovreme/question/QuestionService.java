@@ -7,6 +7,7 @@ import com.nashetovreme.question.dto.CreateQuestionRequest;
 import com.nashetovreme.question.dto.QuestionAnswerResponse;
 import com.nashetovreme.question.dto.QuestionResponse;
 import com.nashetovreme.security.AuthenticatedUser;
+import com.nashetovreme.shared.audit.AuditEventLogger;
 import com.nashetovreme.user.User;
 import com.nashetovreme.user.UserRepository;
 import com.nashetovreme.user.UserRole;
@@ -26,6 +27,7 @@ public class QuestionService {
     private final QuestionAnswerRepository questionAnswerRepository;
     private final FamilyRepository familyRepository;
     private final UserRepository userRepository;
+    private final AuditEventLogger auditEventLogger;
 
     @Transactional(readOnly = true)
     public List<QuestionResponse> getQuestions() {
@@ -122,6 +124,12 @@ public class QuestionService {
 
     private void verifyFamilyAccess(Long requestedFamilyId, AuthenticatedUser principal) {
         if (principal.getFamilyId() == null || !principal.getFamilyId().equals(requestedFamilyId)) {
+            auditEventLogger.familyAccessDenied(
+                    "question",
+                    principal.getId(),
+                    principal.getFamilyId(),
+                    requestedFamilyId
+            );
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this family");
         }
     }

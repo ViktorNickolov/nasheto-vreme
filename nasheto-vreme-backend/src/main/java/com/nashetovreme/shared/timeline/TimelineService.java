@@ -5,6 +5,7 @@ import com.nashetovreme.moment.MomentRepository;
 import com.nashetovreme.question.QuestionAnswer;
 import com.nashetovreme.question.QuestionAnswerRepository;
 import com.nashetovreme.security.AuthenticatedUser;
+import com.nashetovreme.shared.audit.AuditEventLogger;
 import com.nashetovreme.shared.timeline.dto.TimelineItemResponse;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,6 +22,7 @@ public class TimelineService {
 
     private final MomentRepository momentRepository;
     private final QuestionAnswerRepository questionAnswerRepository;
+    private final AuditEventLogger auditEventLogger;
 
     @Transactional(readOnly = true)
     public List<TimelineItemResponse> getTimeline(Long familyId,
@@ -68,6 +70,12 @@ public class TimelineService {
 
     private void verifyFamilyAccess(Long requestedFamilyId, AuthenticatedUser principal) {
         if (principal.getFamilyId() == null || !principal.getFamilyId().equals(requestedFamilyId)) {
+            auditEventLogger.familyAccessDenied(
+                    "timeline",
+                    principal.getId(),
+                    principal.getFamilyId(),
+                    requestedFamilyId
+            );
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this family");
         }
     }

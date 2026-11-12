@@ -76,6 +76,22 @@ APP_JWT_SECRET=<base64-secret>
 APP_CORS_ORIGINS=https://app.example.com
 ```
 
+## Production Release Security Checklist
+
+- [ ] `APP_JWT_SECRET` is set from secret manager (not committed in source control)
+- [ ] `APP_CORS_ORIGINS` contains only trusted frontend domains
+- [ ] TLS is enabled in front of the backend (HSTS requires HTTPS)
+- [ ] Backend and frontend test suites pass
+- [ ] Dependency security gate passes (`npm audit` high+ and OWASP dependency-check)
+- [ ] Audit logs are collected and retained according to policy
+
+## Secret Rotation Policy
+
+- Rotate `APP_JWT_SECRET` on a fixed cadence (for example every 90 days) and immediately after suspected exposure.
+- During planned rotation, deploy a maintenance window or force re-authentication because existing JWTs become invalid.
+- Keep rotation history in your secret manager metadata (who rotated, when, and why).
+- Never share secrets over chat/email; inject them at runtime via environment variables or secret stores.
+
 ## Next Step
 
 After Foundation, implement `Auth` module (JWT register/login), then continue with `Family`, `Questions`, `Moments`, `Uploads`, and `Timeline`.

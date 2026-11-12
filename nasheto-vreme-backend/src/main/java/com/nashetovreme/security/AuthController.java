@@ -5,6 +5,7 @@ import com.nashetovreme.security.dto.LoginRequest;
 import com.nashetovreme.security.dto.RefreshTokenRequest;
 import com.nashetovreme.security.dto.RegisterRequest;
 import com.nashetovreme.security.dto.UserProfileResponse;
+import com.nashetovreme.shared.audit.AuditEventLogger;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,18 +31,37 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenCookieProperties refreshTokenCookieProperties;
+    private final AuditEventLogger auditEventLogger;
 
     @PostMapping("/register")
-    public AuthResponse register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
+    public AuthResponse register(@Valid @RequestBody RegisterRequest request,
+                                 HttpServletRequest httpRequest,
+                                 HttpServletResponse response) {
         AuthResponse authResponse = authService.register(request);
         writeRefreshCookie(response, authResponse);
+        auditEventLogger.authSuccess(
+                "register",
+                authResponse.user().id(),
+                authResponse.user().familyId(),
+                authResponse.user().email(),
+                resolveClientIp(httpRequest)
+        );
         return sanitizeAuthResponse(authResponse);
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+    public AuthResponse login(@Valid @RequestBody LoginRequest request,
+                              HttpServletRequest httpRequest,
+                              HttpServletResponse response) {
         AuthResponse authResponse = authService.login(request);
         writeRefreshCookie(response, authResponse);
+        auditEventLogger.authSuccess(
+                "login",
+                authResponse.user().id(),
+                authResponse.user().familyId(),
+                authResponse.user().email(),
+                resolveClientIp(httpRequest)
+        );
         return sanitizeAuthResponse(authResponse);
     }
 
@@ -52,11 +72,18 @@ public class AuthController {
         String refreshToken = resolveRefreshToken(httpRequest, request);
         AuthResponse authResponse = authService.refresh(refreshToken);
         writeRefreshCookie(response, authResponse);
+        auditEventLogger.authSuccess(
+                "refresh",
+                authResponse.user().id(),
+                authResponse.user().familyId(),
+                authResponse.user().email(),
+                resolveClientIp(httpRequest)
+        );
         return sanitizeAuthResponse(authResponse);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from(refreshTokenCookieProperties.getName(), "")
                 .httpOnly(true)
                 .secure(refreshTokenCookieProperties.isSecure())
@@ -65,6 +92,7 @@ public class AuthController {
                 .maxAge(Duration.ZERO)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
+        auditEventLogger.authLogout(resolveClientIp(request));
         return ResponseEntity.noContent().build();
     }
 
@@ -112,6 +140,14 @@ public class AuthController {
                 null,
                 authResponse.user()
         );
+    }
+
+    private static String resolveClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
 
