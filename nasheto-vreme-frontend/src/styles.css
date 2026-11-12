@@ -180,6 +180,7 @@ button:hover {
 
 .main-content {
   padding: 22px;
+  min-width: 0;
 }
 
 .topbar {
@@ -279,6 +280,9 @@ button:hover {
 pre {
   margin: 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: auto;
   background: #1c1b1a;
   color: #e8e2d9;
   padding: 12px;

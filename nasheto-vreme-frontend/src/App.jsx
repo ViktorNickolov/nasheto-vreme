@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   answerQuestion,
   clearAuth,
@@ -48,9 +48,11 @@ export default function App() {
   const [moments, setMoments] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [pdfPreview, setPdfPreview] = useState(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
   const [uploadResult, setUploadResult] = useState("");
   const [todayQuestion, setTodayQuestion] = useState(null);
   const [output, setOutput] = useState("Ready.");
+  const [bootstrapping, setBootstrapping] = useState(true);
 
   const [loginForm, setLoginForm] = useState(initialLogin);
   const [registerForm, setRegisterForm] = useState(initialRegister);
@@ -65,8 +67,36 @@ export default function App() {
     if (!profile) {
       return "Not loaded";
     }
-    return `${profile.firstName} ${profile.lastName} | family #${profile.familyId}`;
+    return `${profile.firstName} ${profile.lastName} | ${profile.familyName || "No family"}`;
   }, [profile]);
+
+  function formatDate(value) {
+    if (!value) {
+      return "-";
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString("bg-BG", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function resolveCreatedByName(createdById) {
+    if (!createdById || members.length === 0) {
+      return "-";
+    }
+    const creator = members.find((member) => Number(member.userId) === Number(createdById));
+    if (!creator) {
+      return "-";
+    }
+    return `${creator.firstName} ${creator.lastName}`;
+  }
 
   function show(data) {
     setOutput(typeof data === "string" ? data : JSON.stringify(data, null, 2));
@@ -80,6 +110,10 @@ export default function App() {
     setMoments([]);
     setTimeline([]);
     setPdfPreview(null);
+    if (pdfPreviewUrl) {
+      window.URL.revokeObjectURL(pdfPreviewUrl);
+    }
+    setPdfPreviewUrl("");
     setUploadResult("");
     setTodayQuestion(null);
     setAnswerForm(initialAnswer);
@@ -87,6 +121,60 @@ export default function App() {
     setPdfForm(initialPdf);
     setUploadFile(null);
   }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrapSession() {
+      const current = getAuth();
+      if (current?.accessToken) {
+        setAuthState(current);
+        try {
+          await refreshDashboardData();
+        } catch {
+          // Keep the app usable even if initial data loading fails.
+        }
+        if (!cancelled) {
+          setBootstrapping(false);
+        }
+        return;
+      }
+
+      try {
+        const refreshed = await refreshToken();
+        if (cancelled) {
+          return;
+        }
+        setAuth(refreshed);
+        setAuthState(refreshed);
+        await refreshDashboardData();
+        setAuthInfo("Session restored.");
+      } catch {
+        if (!cancelled) {
+          clearAuth();
+          setAuthState(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setBootstrapping(false);
+        }
+      }
+    }
+
+    bootstrapSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) {
+        window.URL.revokeObjectURL(pdfPreviewUrl);
+      }
+    };
+  }, [pdfPreviewUrl]);
 
   function handleAuthError(error) {
     clearAuth();
@@ -346,7 +434,21 @@ export default function App() {
         includeAnswers: pdfForm.includeAnswers
       });
 
+      const previewFile = await downloadPdfBook({
+        familyId: Number(profile.familyId),
+        period: pdfForm.period,
+        style: pdfForm.style,
+        includeMoments: pdfForm.includeMoments,
+        includeAnswers: pdfForm.includeAnswers
+      });
+
+      if (pdfPreviewUrl) {
+        window.URL.revokeObjectURL(pdfPreviewUrl);
+      }
+
+      const nextPreviewUrl = window.URL.createObjectURL(previewFile.blob);
       setPdfPreview(result);
+      setPdfPreviewUrl(nextPreviewUrl);
       show(result);
     }, { authSensitive: true });
   }
@@ -379,7 +481,14 @@ export default function App() {
 
   return (
     <>
-      {!isLogged ? (
+      {bootstrapping ? (
+        <section className="auth-screen">
+          <div className="auth-card">
+            <p className="small-muted">Restoring session...</p>
+          </div>
+        </section>
+      ) : null}
+      {!bootstrapping && !isLogged ? (
         <section className="auth-screen" id="authScreen">
           <div className="auth-card">
             <div className="brand-row">
@@ -419,7 +528,8 @@ export default function App() {
             <p className="small-muted" id="authInfo">{authInfo}</p>
           </div>
         </section>
-      ) : (
+      ) : null}
+      {!bootstrapping && isLogged ? (
         <section className="shell" id="appScreen">
           <aside className="sidebar">
             <div className="brand-row">
@@ -463,7 +573,7 @@ export default function App() {
                 <InfoItem label="Name" value={profile ? `${profile.firstName} ${profile.lastName}` : "-"} />
                 <InfoItem label="Email" value={profile?.email || "-"} />
                 <InfoItem label="Role" value={profile?.role || "-"} />
-                <InfoItem label="Family ID" value={profile?.familyId || "-"} />
+                <InfoItem label="Family" value={profile?.familyName || family?.name || "-"} />
               </div>
             </section>
 
@@ -474,8 +584,8 @@ export default function App() {
               </div>
               <div className="info-grid" id="familyCard">
                 <InfoItem label="Family" value={family?.name || "-"} />
-                <InfoItem label="Created by" value={family?.createdBy || "-"} />
-                <InfoItem label="Created at" value={family?.createdAt || "-"} />
+                <InfoItem label="Created by" value={resolveCreatedByName(family?.createdBy)} />
+                <InfoItem label="Created at" value={formatDate(family?.createdAt)} />
               </div>
               <div className="list" id="membersList">
                 {members.length === 0 ? <p className="small-muted">No items yet.</p> : members.map((member) => (
@@ -493,7 +603,7 @@ export default function App() {
                 <button id="todayQuestionBtn" type="button" onClick={onLoadTodayQuestion}>Load</button>
               </div>
               <p className="question-box" id="todayQuestionText">
-                {todayQuestion ? `${todayQuestion.id}. ${todayQuestion.title}` : "Press \"Load\" to get today's question."}
+                {todayQuestion ? todayQuestion.title : "Press \"Load\" to get today's question."}
               </p>
               <form className="grid2" id="answerForm" onSubmit={submitAnswer}>
                 <input name="questionId" type="number" placeholder="Question ID" value={answerForm.questionId} onChange={updateForm(setAnswerForm)} required />
@@ -509,7 +619,7 @@ export default function App() {
                   <article className="list-item" key={answer.id || `${answer.authorName}-${answer.createdAt}`}>
                     <h4>{answer.questionTitle}</h4>
                     <p>{answer.answerText}</p>
-                    <div className="list-meta">by {answer.authorName} | {answer.createdAt}</div>
+                    <div className="list-meta">by {answer.authorName} | {formatDate(answer.createdAt)}</div>
                   </article>
                 ))}
               </div>
@@ -531,7 +641,7 @@ export default function App() {
                   <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
                     <h4>{moment.title}</h4>
                     <p>{moment.description || "No description"}</p>
-                    <div className="list-meta">{moment.createdAt}</div>
+                    <div className="list-meta">{formatDate(moment.createdAt)}</div>
                   </article>
                 ))}
               </div>
@@ -562,7 +672,7 @@ export default function App() {
                   <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
                     <h4>{item.type} | {item.title}</h4>
                     <p>{item.details || "No details"}</p>
-                    <div className="list-meta">{item.author || "Family"} | {item.createdAt}</div>
+                    <div className="list-meta">{item.author || "Family"} | {formatDate(item.createdAt)}</div>
                   </article>
                 ))}
               </div>
@@ -583,13 +693,19 @@ export default function App() {
               </form>
               <button id="downloadPdfBtn" type="button" onClick={onDownloadPdf}>Download PDF</button>
               <div className="info-grid" id="pdfPreviewCard">
-                <InfoItem label="Export ID" value={pdfPreview?.exportId || "-"} />
                 <InfoItem label="Status" value={pdfPreview?.status || "-"} />
                 <InfoItem label="Period" value={pdfPreview?.period || "-"} />
                 <InfoItem label="Style" value={pdfPreview?.style || "-"} />
                 <InfoItem label="Moments" value={pdfPreview?.includedMoments ?? "-"} />
                 <InfoItem label="Answers" value={pdfPreview?.includedAnswers ?? "-"} />
               </div>
+              {pdfPreviewUrl ? (
+                <iframe
+                  title="PDF Preview"
+                  src={pdfPreviewUrl}
+                  style={{ width: "100%", minHeight: 420, border: "1px solid #e7ded2", borderRadius: 12, marginTop: 10 }}
+                />
+              ) : null}
             </section>
 
             <section className="card">
@@ -598,7 +714,7 @@ export default function App() {
             </section>
           </main>
         </section>
-      )}
+      ) : null}
     </>
   );
 }
