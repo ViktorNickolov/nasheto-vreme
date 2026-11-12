@@ -121,6 +121,34 @@ class AuthControllerIntegrationTest {
                         .content(payload))
                 .andExpect(status().isTooManyRequests());
     }
+
+    @Test
+    void tamperedJwtIsRejectedForProtectedEndpoint() throws Exception {
+        String registerPayload = """
+                {
+                  "email": "jwt-tamper@example.com",
+                  "password": "strongPass123",
+                  "firstName": "Jwt",
+                  "lastName": "Tamper",
+                  "familyName": "Jwt Family"
+                }
+                """;
+
+        String registerResponse = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerPayload))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String validToken = objectMapper.readTree(registerResponse).get("accessToken").asText();
+        String tamperedToken = validToken.substring(0, validToken.length() - 1) + "x";
+
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", "Bearer " + tamperedToken))
+                .andExpect(status().isUnauthorized());
+    }
 }
 
 

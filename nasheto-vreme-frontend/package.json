@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 5173",
-    "test": "node tests/smoke.test.js"
+    "test": "node tests/smoke.test.js && node tests/auth-cookie-flow.test.js && node tests/auth-error-flow.test.js"
   },
   "dependencies": {
     "react": "18.3.1",

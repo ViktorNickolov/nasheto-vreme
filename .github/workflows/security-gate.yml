@@ -1,0 +1,82 @@
+name: Security Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run backend tests
+        run: mvn -B -f nasheto-vreme-backend/pom.xml test
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: nasheto-vreme-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm --prefix nasheto-vreme-frontend ci
+
+      - name: Run frontend tests
+        run: npm --prefix nasheto-vreme-frontend test
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Frontend npm audit (high+)
+        run: |
+          cd nasheto-vreme-frontend
+          npm install --package-lock-only
+          npm audit --audit-level=high
+
+      - name: Backend dependency check (CVSS >= 7 fails)
+        run: |
+          mvn -B -f nasheto-vreme-backend/pom.xml \
+            org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -Dformats=HTML,JSON \
+            -DskipTestScope=true
+
+      - name: Upload dependency-check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: nasheto-vreme-backend/target/dependency-check-report.*
+

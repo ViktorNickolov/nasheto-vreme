@@ -30,6 +30,9 @@ class FamilyQuestionFlowIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private record AuthFixture(String accessToken, long familyId) {
+    }
+
     @Test
     void familyAndQuestionAnswerFlowWorks() throws Exception {
         String registerPayload = """
@@ -194,6 +197,74 @@ class FamilyQuestionFlowIntegrationTest {
         if (!"%PDF".equals(pdfHeader)) {
             throw new AssertionError("Invalid PDF header");
         }
+    }
+
+    @Test
+    void userCannotAccessOrWriteAnotherFamilyAnswers() throws Exception {
+        AuthFixture owner = registerUser("family-owner@example.com", "Owner Family");
+        AuthFixture outsider = registerUser("family-outsider@example.com", "Outsider Family");
+
+        String createQuestionPayload = """
+                {
+                  "title": "Family boundary test question",
+                  "category": "blizost",
+                  "active": true
+                }
+                """;
+
+        String questionResponse = mockMvc.perform(post("/api/v1/questions")
+                        .header("Authorization", "Bearer " + owner.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createQuestionPayload))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        long questionId = objectMapper.readTree(questionResponse).get("id").asLong();
+
+        String foreignAnswerPayload = """
+                {
+                  "familyId": %d,
+                  "answerText": "Trying to write into another family"
+                }
+                """.formatted(owner.familyId());
+
+        mockMvc.perform(post("/api/v1/questions/{id}/answers", questionId)
+                        .header("Authorization", "Bearer " + outsider.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(foreignAnswerPayload))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/v1/families/{id}/answers", owner.familyId())
+                        .header("Authorization", "Bearer " + outsider.accessToken()))
+                .andExpect(status().isForbidden());
+    }
+
+    private AuthFixture registerUser(String email, String familyName) throws Exception {
+        String registerPayload = """
+                {
+                  "email": "%s",
+                  "password": "strongPass123",
+                  "firstName": "Test",
+                  "lastName": "User",
+                  "familyName": "%s"
+                }
+                """.formatted(email, familyName);
+
+        String authResponse = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerPayload))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode authJson = objectMapper.readTree(authResponse);
+        return new AuthFixture(
+                authJson.get("accessToken").asText(),
+                authJson.get("user").get("familyId").asLong()
+        );
     }
 }
 

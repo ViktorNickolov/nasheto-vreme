@@ -16,4 +16,3 @@ public class RefreshTokenCookieProperties {
     private String sameSite = "Lax";
     private boolean secure;
 }
-
