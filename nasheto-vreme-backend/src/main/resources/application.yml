@@ -23,6 +23,10 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ORIGINS:http://localhost:5173}
+
 logging:
   level:
     root: INFO

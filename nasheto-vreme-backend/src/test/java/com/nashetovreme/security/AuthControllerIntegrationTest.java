@@ -98,6 +98,31 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void loginIsRateLimitedAfterFiveAttemptsPerIp() throws Exception {
+        String payload = """
+                {
+                  "email": "missing@example.com",
+                  "password": "wrongPassword123"
+                }
+                """;
+
+        String ip = "203.0.113.10";
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .header("X-Forwarded-For", ip)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(payload))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .header("X-Forwarded-For", ip)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isTooManyRequests());
+    }
 }
 
 

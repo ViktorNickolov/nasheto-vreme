@@ -24,7 +24,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-nasheto_vreme}
       DB_USER: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      APP_JWT_SECRET: ${APP_JWT_SECRET:-bXktc3VwZXItc2VjcmV0LWtleS1mb3Itand0LXNpZ25pbmctMjAyNg==}
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      APP_CORS_ORIGINS: ${APP_CORS_ORIGINS}
     depends_on:
       postgres:
         condition: service_healthy

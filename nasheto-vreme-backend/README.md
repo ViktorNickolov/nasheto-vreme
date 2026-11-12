@@ -37,6 +37,12 @@ src/main/java/com/nashetovreme
 
 ## Run Locally
 
+Requirements:
+
+- JDK 21
+- Maven 3.8+
+- Docker (for PostgreSQL)
+
 1. Start PostgreSQL:
 
     ```bash
@@ -54,6 +60,20 @@ src/main/java/com/nashetovreme
 ```bash
 mvn clean test
 mvn clean package
+```
+
+## Production Security Configuration
+
+These environment variables are required when running with `prod` profile:
+
+- `APP_JWT_SECRET`: Base64-encoded secret (minimum 32 decoded bytes)
+- `APP_CORS_ORIGINS`: comma-separated allowed origins
+
+Example:
+
+```bash
+APP_JWT_SECRET=<base64-secret>
+APP_CORS_ORIGINS=https://app.example.com
 ```
 
 ## Next Step

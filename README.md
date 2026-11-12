@@ -6,6 +6,12 @@ This repository is organized as a small monorepo and contains:
 - `nasheto-vreme-frontend` - React + Vite frontend (served by Nginx in Docker)
 - root-level Docker Compose files for local and runtime deployments
 
+## Prerequisites
+
+- JDK 21 for backend build/test
+- Maven 3.8+
+- Docker Desktop (for compose flows)
+
 ## Project structure
 
 ```text
@@ -60,6 +66,11 @@ Use prebuilt images and the runtime compose file:
 1. Copy `docker-compose.runtime.yml` and `.env.runtime.example`.
 2. Create `.env.runtime` from `.env.runtime.example` and set image names.
 3. Start runtime stack.
+
+Required runtime env vars for backend security:
+
+- `APP_JWT_SECRET` - strong Base64-encoded key (must decode to at least 32 bytes)
+- `APP_CORS_ORIGINS` - comma-separated allowed frontend origins (for example `https://app.example.com`)
 
 ```bash
 cd "<your-folder>"
