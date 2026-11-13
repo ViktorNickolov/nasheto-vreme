@@ -1,8 +1,10 @@
 const API_URL_KEY = "nv_api_base";
 const API_TIMEOUT_MS = 10000;
 const AUTH_STATE_KEY = "nv_auth_state";
+const AUTH_RETRY_EXCLUDED_PATHS = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
 
 let authState = null;
+let refreshInFlight = null;
 
 function getSessionStorageSafe() {
   if (typeof globalThis === "undefined" || !globalThis.sessionStorage) {
@@ -62,7 +64,30 @@ function authHeader() {
   return auth?.accessToken ? { Authorization: `Bearer ${auth.accessToken}` } : {};
 }
 
-async function api(path, options = {}) {
+function createApiError(response, body) {
+  const error = new Error(body?.message || `${response.status} ${response.statusText}`);
+  error.status = response.status;
+  return error;
+}
+
+function shouldSkipAuthRetry(path) {
+  return AUTH_RETRY_EXCLUDED_PATHS.some((excludedPath) => path.startsWith(excludedPath));
+}
+
+async function refreshSession() {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const refreshed = await refreshToken();
+      setAuth(refreshed);
+      return refreshed;
+    })().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+async function api(path, options = {}, allowAuthRetry = true) {
   const response = await fetchWithTimeout(`${getApiBaseUrl()}${path}`, {
     ...options,
     credentials: "include",
@@ -75,8 +100,13 @@ async function api(path, options = {}) {
 
   const body = await parseJsonBody(response);
 
+  if (response.status === 401 && allowAuthRetry && !shouldSkipAuthRetry(path)) {
+    await refreshSession();
+    return api(path, options, false);
+  }
+
   if (!response.ok) {
-    throw new Error(body?.message || `${response.status} ${response.statusText}`);
+    throw createApiError(response, body);
   }
 
   return body;
@@ -194,7 +224,7 @@ export function listMoments(familyId) {
   return api(`/moments?familyId=${familyId}`);
 }
 
-export async function uploadImage(familyId, file) {
+export async function uploadImage(familyId, file, allowAuthRetry = true) {
   const formData = new FormData();
   formData.append("familyId", String(familyId));
   formData.append("file", file);
@@ -208,16 +238,21 @@ export async function uploadImage(familyId, file) {
     body: formData
   });
 
+  if (response.status === 401 && allowAuthRetry) {
+    await refreshSession();
+    return uploadImage(familyId, file, false);
+  }
+
   const body = await parseJsonBody(response);
 
   if (!response.ok) {
-    throw new Error(body?.message || `${response.status} ${response.statusText}`);
+    throw createApiError(response, body);
   }
 
   return body;
 }
 
-export async function downloadPdfBook(payload) {
+export async function downloadPdfBook(payload, allowAuthRetry = true) {
   const response = await fetchWithTimeout(`${getApiBaseUrl()}/exports/pdf/download`, {
     method: "POST",
     credentials: "include",
@@ -228,14 +263,54 @@ export async function downloadPdfBook(payload) {
     body: JSON.stringify(payload)
   });
 
+  if (response.status === 401 && allowAuthRetry) {
+    await refreshSession();
+    return downloadPdfBook(payload, false);
+  }
+
   if (!response.ok) {
     const body = await parseJsonBody(response);
-    throw new Error(body?.message || `${response.status} ${response.statusText}`);
+    throw createApiError(response, body);
   }
 
   return {
     blob: await response.blob(),
     fileName: response.headers.get("Content-Disposition") || "nasheto-vreme.pdf"
+  };
+}
+
+export async function downloadUploadedFile(filePath, allowAuthRetry = true) {
+  const fileName = (filePath || "").split(/[\\/]/).pop();
+  if (!fileName) {
+    throw new Error("Missing uploaded file reference.");
+  }
+
+  const response = await fetchWithTimeout(`${getApiBaseUrl()}/uploads/images/${encodeURIComponent(fileName)}`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      ...authHeader()
+    }
+  });
+
+  if (response.status === 401 && allowAuthRetry) {
+    await refreshSession();
+    return downloadUploadedFile(filePath, false);
+  }
+
+  if (!response.ok) {
+    let body = null;
+    const contentType = response.headers.get("Content-Type") || "";
+    if (contentType.includes("application/json")) {
+      body = await parseJsonBody(response);
+    }
+    throw createApiError(response, body);
+  }
+
+  return {
+    blob: await response.blob(),
+    contentType: response.headers.get("Content-Type") || "application/octet-stream",
+    fileName
   };
 }
 

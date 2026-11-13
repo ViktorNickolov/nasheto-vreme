@@ -4,6 +4,7 @@ import {
   clearAuth,
   createMoment,
   createPdfPreview,
+  downloadUploadedFile,
   downloadPdfBook,
   getApiBaseUrl,
   getAuth,
@@ -226,7 +227,7 @@ export default function App() {
     try {
       return await action();
     } catch (error) {
-      if (options.authSensitive) {
+      if (options.authSensitive && error?.status === 401) {
         handleAuthError(error);
       } else {
         show({ error: error.message });
@@ -587,10 +588,10 @@ export default function App() {
                 className="file-input-hidden"
                 name="file"
                 type="file"
-                accept="image/*"
                 onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
               />
-              <label htmlFor="uploadFileInput" className="file-trigger">Избери снимка</label>
+              <label htmlFor="uploadFileInput" className="file-trigger">Избери файл</label>
+              {uploadFile ? <span className="attached-file">Прикачена: {uploadFile.name}</span> : null}
               <button type="submit">Добави момент</button>
             </div>
           </form>
@@ -599,6 +600,7 @@ export default function App() {
             {moments.length === 0 ? <p className="small-muted">Все още няма данни.</p> : moments.map((moment) => (
               <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
                 <h4>{moment.title}</h4>
+                {moment.imageUrl ? <AttachmentPreview filePath={moment.imageUrl} label={moment.title} /> : null}
                 <p>{moment.description || "Няма описание"}</p>
                 <div className="list-meta">{formatDate(moment.createdAt)}</div>
               </article>
@@ -619,6 +621,7 @@ export default function App() {
             {timeline.length === 0 ? <p className="small-muted">Все още няма данни.</p> : timeline.map((item) => (
               <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
                 <h4>{item.type} | {item.title}</h4>
+                {item.imageUrl ? <AttachmentPreview filePath={item.imageUrl} label={item.title} /> : null}
                 <p>{item.details || "Няма подробности"}</p>
                 <div className="list-meta">{item.author || "Семейство"} | {formatDate(item.createdAt)}</div>
               </article>
@@ -790,3 +793,84 @@ function InfoItem({ label, value }) {
     </div>
   );
 }
+
+function AttachmentPreview({ filePath, label }) {
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [isImage, setIsImage] = useState(false);
+  const [fileHref, setFileHref] = useState("");
+
+  useEffect(() => {
+    let disposed = false;
+    let objectUrl = "";
+
+    async function loadAttachment() {
+      if (!filePath) {
+        return;
+      }
+
+      if (/^https?:\/\//i.test(filePath)) {
+        const image = /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(filePath);
+        if (!disposed) {
+          setIsImage(image);
+          if (image) {
+            setPreviewUrl(filePath);
+            setFileHref("");
+          } else {
+            setFileHref(filePath);
+            setPreviewUrl("");
+          }
+        }
+        return;
+      }
+
+      try {
+        const result = await downloadUploadedFile(filePath);
+        if (disposed) {
+          return;
+        }
+
+        const contentType = result.contentType || "";
+        const image = contentType.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(result.fileName);
+        objectUrl = window.URL.createObjectURL(result.blob);
+
+        setIsImage(image);
+        if (image) {
+          setPreviewUrl(objectUrl);
+          setFileHref("");
+        } else {
+          setFileHref(objectUrl);
+          setPreviewUrl("");
+        }
+      } catch {
+        if (!disposed) {
+          setIsImage(false);
+          setPreviewUrl("");
+          setFileHref("");
+        }
+      }
+    }
+
+    setIsImage(false);
+    setPreviewUrl("");
+    setFileHref("");
+    loadAttachment();
+
+    return () => {
+      disposed = true;
+      if (objectUrl) {
+        window.URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [filePath]);
+
+  if (isImage && previewUrl) {
+    return <img className="timeline-attachment" src={previewUrl} alt={label || "Прикачена снимка"} />;
+  }
+
+  if (fileHref) {
+    return <a className="timeline-file-link" href={fileHref} target="_blank" rel="noreferrer">Прикачен файл</a>;
+  }
+
+  return null;
+}
+

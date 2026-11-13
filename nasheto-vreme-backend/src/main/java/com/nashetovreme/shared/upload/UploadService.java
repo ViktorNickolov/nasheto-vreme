@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,23 +32,18 @@ public class UploadService {
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only image files are allowed");
-        }
 
         if (file.getSize() > maxFileSizeBytes) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File exceeds maximum allowed size");
         }
 
         String detectedType = detectImageType(file);
-        if (detectedType == null || !contentTypeMatches(contentType, detectedType)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image content does not match declared file type");
-        }
+        String resolvedContentType = resolveContentType(contentType, detectedType);
 
         try {
             Files.createDirectories(basePath);
 
-            String extension = extensionForType(detectedType);
+            String extension = resolveExtension(file.getOriginalFilename(), resolvedContentType);
             String fileName = UUID.randomUUID() + extension;
             Path target = basePath.resolve(fileName).normalize();
 
@@ -56,18 +52,57 @@ public class UploadService {
             }
 
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-            return new UploadImageResponse(fileName, detectedType, file.getSize(), "uploads/images/" + fileName);
+            return new UploadImageResponse(fileName, resolvedContentType, file.getSize(), "uploads/images/" + fileName);
         } catch (IOException ex) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "File upload failed");
         }
     }
 
-    private static boolean contentTypeMatches(String declaredType, String detectedType) {
-        String normalized = declaredType.toLowerCase(Locale.ROOT);
-        if ("image/jpeg".equals(detectedType)) {
-            return "image/jpeg".equals(normalized) || "image/jpg".equals(normalized);
+    public StoredUploadFile loadUploadedFile(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File name is required");
         }
-        return detectedType.equals(normalized);
+
+        Path target = basePath.resolve(fileName).normalize();
+        if (!target.startsWith(basePath)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file path");
+        }
+
+        if (!Files.exists(target) || !Files.isRegularFile(target)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+        }
+
+        try {
+            String contentType = Files.probeContentType(target);
+            if (contentType == null || contentType.isBlank()) {
+                contentType = "application/octet-stream";
+            }
+            return new StoredUploadFile(target, contentType, target.getFileName().toString());
+        } catch (IOException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to read uploaded file");
+        }
+    }
+
+    private static String resolveContentType(String declaredType, String detectedType) {
+        if (declaredType != null && !declaredType.isBlank()) {
+            return declaredType.toLowerCase(Locale.ROOT);
+        }
+        if (detectedType != null && !detectedType.isBlank()) {
+            return detectedType;
+        }
+        return "application/octet-stream";
+    }
+
+    private static String resolveExtension(String originalFilename, String contentType) {
+        String sanitizedOriginal = Objects.toString(originalFilename, "");
+        int dotIndex = sanitizedOriginal.lastIndexOf('.');
+        if (dotIndex >= 0 && dotIndex < sanitizedOriginal.length() - 1) {
+            String extension = sanitizedOriginal.substring(dotIndex).toLowerCase(Locale.ROOT);
+            if (extension.matches("\\.[a-z0-9]{1,10}")) {
+                return extension;
+            }
+        }
+        return extensionForType(contentType);
     }
 
     private static String extensionForType(String contentType) {
@@ -76,6 +111,7 @@ public class UploadService {
             case "image/jpeg" -> ".jpg";
             case "image/gif" -> ".gif";
             case "image/webp" -> ".webp";
+            case "application/pdf" -> ".pdf";
             default -> ".bin";
         };
     }
@@ -128,6 +164,9 @@ public class UploadService {
             }
         }
         return true;
+    }
+
+    public record StoredUploadFile(Path path, String contentType, String fileName) {
     }
 }
 

@@ -528,6 +528,30 @@ button:hover {
   font-size: 12px;
 }
 
+.timeline-attachment {
+  display: block;
+  width: min(100%, 320px);
+  max-height: 220px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 6px 0 8px;
+}
+
+.timeline-file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 8px;
+  color: #6f6256;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.timeline-file-link:hover {
+  text-decoration: underline;
+}
+
 .question-box {
   background: linear-gradient(140deg, #eaf0e2 0%, #f4f8ef 100%);
   border: 1px solid #d8dfcf;
@@ -668,6 +692,19 @@ button:hover {
 .upload-inline button {
   height: 38px;
   min-width: 90px;
+}
+
+.attached-file {
+  max-width: 280px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #d8ccbe;
+  background: #f5efe6;
+  color: #6f6256;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 pre {

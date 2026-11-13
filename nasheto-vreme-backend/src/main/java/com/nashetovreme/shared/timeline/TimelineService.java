@@ -45,6 +45,7 @@ public class TimelineService {
                     moment.getId(),
                     moment.getTitle(),
                     moment.getDescription(),
+                    moment.getImageUrl(),
                     null,
                     moment.getCreatedAt()
             )));
@@ -57,6 +58,7 @@ public class TimelineService {
                     answer.getId(),
                     answer.getQuestion().getTitle(),
                     answer.getAnswerText(),
+                    null,
                     answer.getAuthor().getFirstName() + " " + answer.getAuthor().getLastName(),
                     answer.getCreatedAt()
             )));
