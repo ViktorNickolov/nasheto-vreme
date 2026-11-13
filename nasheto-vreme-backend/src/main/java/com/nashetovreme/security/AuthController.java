@@ -29,6 +29,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String LEGACY_REFRESH_COOKIE_PATH = "/api/v1/auth";
+
     private final AuthService authService;
     private final RefreshTokenCookieProperties refreshTokenCookieProperties;
     private final AuditEventLogger auditEventLogger;
@@ -70,28 +72,28 @@ public class AuthController {
                                 HttpServletRequest httpRequest,
                                 HttpServletResponse response) {
         String refreshToken = resolveRefreshToken(httpRequest, request);
-        AuthResponse authResponse = authService.refresh(refreshToken);
-        writeRefreshCookie(response, authResponse);
-        auditEventLogger.authSuccess(
-                "refresh",
-                authResponse.user().id(),
-                authResponse.user().familyId(),
-                authResponse.user().email(),
-                resolveClientIp(httpRequest)
-        );
-        return sanitizeAuthResponse(authResponse);
+        try {
+            AuthResponse authResponse = authService.refresh(refreshToken);
+            writeRefreshCookie(response, authResponse);
+            auditEventLogger.authSuccess(
+                    "refresh",
+                    authResponse.user().id(),
+                    authResponse.user().familyId(),
+                    authResponse.user().email(),
+                    resolveClientIp(httpRequest)
+            );
+            return sanitizeAuthResponse(authResponse);
+        } catch (ResponseStatusException ex) {
+            clearRefreshCookie(response, refreshTokenCookieProperties.getPath());
+            clearLegacyRefreshCookie(response);
+            throw ex;
+        }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from(refreshTokenCookieProperties.getName(), "")
-                .httpOnly(true)
-                .secure(refreshTokenCookieProperties.isSecure())
-                .sameSite(refreshTokenCookieProperties.getSameSite())
-                .path(refreshTokenCookieProperties.getPath())
-                .maxAge(Duration.ZERO)
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
+        clearRefreshCookie(response, refreshTokenCookieProperties.getPath());
+        clearLegacyRefreshCookie(response);
         auditEventLogger.authLogout(resolveClientIp(request));
         return ResponseEntity.noContent().build();
     }
@@ -120,6 +122,25 @@ public class AuthController {
                 .sameSite(refreshTokenCookieProperties.getSameSite())
                 .path(refreshTokenCookieProperties.getPath())
                 .maxAge(cookieAge)
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+        clearLegacyRefreshCookie(response);
+    }
+
+    private void clearLegacyRefreshCookie(HttpServletResponse response) {
+        if (LEGACY_REFRESH_COOKIE_PATH.equals(refreshTokenCookieProperties.getPath())) {
+            return;
+        }
+        clearRefreshCookie(response, LEGACY_REFRESH_COOKIE_PATH);
+    }
+
+    private void clearRefreshCookie(HttpServletResponse response, String path) {
+        ResponseCookie cookie = ResponseCookie.from(refreshTokenCookieProperties.getName(), "")
+                .httpOnly(true)
+                .secure(refreshTokenCookieProperties.isSecure())
+                .sameSite(refreshTokenCookieProperties.getSameSite())
+                .path(path)
+                .maxAge(Duration.ZERO)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
     }

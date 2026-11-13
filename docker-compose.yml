@@ -28,6 +28,7 @@ services:
       DB_PASSWORD: postgres
       APP_JWT_SECRET: bXktc3VwZXItc2VjcmV0LWtleS1mb3Itand0LXNpZ25pbmctMjAyNg==
       APP_CORS_ORIGINS: http://localhost:5173
+      APP_REFRESH_COOKIE_SECURE: "false"
     depends_on:
       postgres:
         condition: service_healthy

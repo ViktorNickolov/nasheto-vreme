@@ -1,5 +1,6 @@
 const API_URL_KEY = "nv_api_base";
 const API_TIMEOUT_MS = 10000;
+const AUTH_STATE_KEY = "nv_auth_state";
 
 let authState = null;
 
@@ -12,6 +13,16 @@ export function setApiBaseUrl(url) {
 }
 
 export function getAuth() {
+  if (!authState) {
+    const stored = sessionStorage.getItem(AUTH_STATE_KEY);
+    if (stored) {
+      try {
+        authState = JSON.parse(stored);
+      } catch {
+        sessionStorage.removeItem(AUTH_STATE_KEY);
+      }
+    }
+  }
   return authState;
 }
 
@@ -23,10 +34,17 @@ export function setAuth(payload) {
         user: payload.user
       }
     : null;
+
+  if (authState) {
+    sessionStorage.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
+  } else {
+    sessionStorage.removeItem(AUTH_STATE_KEY);
+  }
 }
 
 export function clearAuth() {
   authState = null;
+  sessionStorage.removeItem(AUTH_STATE_KEY);
 }
 
 function authHeader() {

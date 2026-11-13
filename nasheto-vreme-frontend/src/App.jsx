@@ -25,7 +25,7 @@ import {
 
 const initialLogin = { email: "", password: "" };
 const initialRegister = { email: "", password: "", firstName: "", lastName: "", familyName: "" };
-const initialAnswer = { questionId: "", answerText: "" };
+const initialAnswer = { answerText: "" };
 const initialMoment = { title: "", description: "", imageUrl: "" };
 const initialPdf = {
   period: "monthly",
@@ -33,6 +33,44 @@ const initialPdf = {
   includeMoments: true,
   includeAnswers: true
 };
+
+const dashboardModules = [
+  { key: "profile", label: "Моят профил" },
+  { key: "family", label: "Вашето семейство" },
+  { key: "question", label: "Въпрос за днес" },
+  { key: "moments", label: "Семейни моменти" },
+  { key: "upload", label: "Качи снимка" },
+  { key: "timeline", label: "Семейна хроника" },
+  { key: "pdf", label: "Семейна PDF книга" }
+];
+
+const sidebarHighlights = [
+  {
+    title: "Семейна искра",
+    text: "Спомените оживяват, когато ги споделяме заедно."
+  },
+  {
+    title: "Миг от днес",
+    text: "Всяка снимка е малка врата към щастлив миг."
+  },
+  {
+    title: "Семейна история",
+    text: "Семейството е история, която пишем всеки ден."
+  },
+  {
+    title: "Дневен акцент",
+    text: "Днес е добър ден да запазим още един красив момент."
+  },
+  {
+    title: "Топла връзка",
+    text: "Най-силните връзки се градят с внимание и време."
+  }
+];
+
+function pickSidebarHighlight() {
+  const index = Math.floor(Math.random() * sidebarHighlights.length);
+  return sidebarHighlights[index];
+}
 
 export default function App() {
   const [tab, setTab] = useState("login");
@@ -53,6 +91,8 @@ export default function App() {
   const [todayQuestion, setTodayQuestion] = useState(null);
   const [output, setOutput] = useState("Ready.");
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [activeModule, setActiveModule] = useState("profile");
+  const [sidebarHighlight] = useState(() => pickSidebarHighlight());
 
   const [loginForm, setLoginForm] = useState(initialLogin);
   const [registerForm, setRegisterForm] = useState(initialRegister);
@@ -65,9 +105,9 @@ export default function App() {
 
   const profileInfo = useMemo(() => {
     if (!profile) {
-      return "Not loaded";
+      return "Профилът не е зареден";
     }
-    return `${profile.firstName} ${profile.lastName} | ${profile.familyName || "No family"}`;
+    return `${profile.firstName} ${profile.lastName} | ${profile.familyName || "Без семейство"}`;
   }, [profile]);
 
   function formatDate(value) {
@@ -180,7 +220,7 @@ export default function App() {
     clearAuth();
     setAuthState(null);
     resetDashboardState();
-    setAuthInfo("Session expired. Please log in again.");
+    setAuthInfo("Сесията е изтекла. Моля, влезте отново.");
     show({ error: error.message });
   }
 
@@ -278,7 +318,7 @@ export default function App() {
       const result = await login(loginForm);
       setAuth(result);
       setAuthState(result);
-      setAuthInfo("Login successful.");
+      setAuthInfo("Успешен вход.");
       await refreshDashboardData();
       show(result);
     });
@@ -290,7 +330,7 @@ export default function App() {
       const result = await register(registerForm);
       setAuth(result);
       setAuthState(result);
-      setAuthInfo("Registration successful. Dashboard loaded.");
+      setAuthInfo("Успешна регистрация. Таблото е заредено.");
       await refreshDashboardData();
       show(result);
     });
@@ -307,15 +347,16 @@ export default function App() {
     clearAuth();
     setAuthState(null);
     resetDashboardState();
+    setActiveModule("profile");
     setTab("login");
-    setAuthInfo("You are logged out.");
-    show("Logged out");
+    setAuthInfo("Излязохте успешно.");
+    show("Изходът е успешен.");
   }
 
   async function onRefreshProfile() {
     await withBusy(async () => {
       await refreshDashboardData();
-      show("Profile and family data refreshed.");
+      show("Профилът и семейните данни са обновени.");
     }, { authSensitive: true });
   }
 
@@ -329,31 +370,24 @@ export default function App() {
     }, { authSensitive: true });
   }
 
-  async function onLoadFamily() {
-    await withBusy(async () => {
-      await loadFamilyData();
-      show("Family data refreshed.");
-    }, { authSensitive: true });
-  }
-
   async function onLoadAnswers() {
     await withBusy(async () => {
       await loadAnswers();
-      show("Answers refreshed.");
+      show("Отговорите са обновени.");
     }, { authSensitive: true });
   }
 
   async function onLoadMoments() {
     await withBusy(async () => {
       await loadMoments();
-      show("Moments refreshed.");
+      show("Моментите са обновени.");
     }, { authSensitive: true });
   }
 
   async function onLoadTimeline() {
     await withBusy(async () => {
       await loadTimeline();
-      show("Timeline refreshed.");
+      show("Хрониката е обновена.");
     }, { authSensitive: true });
   }
 
@@ -361,7 +395,6 @@ export default function App() {
     await withBusy(async () => {
       const result = await getTodayQuestion();
       setTodayQuestion(result);
-      setAnswerForm((current) => ({ ...current, questionId: String(result.id) }));
       show(result);
     });
   }
@@ -370,10 +403,13 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-        throw new Error("Profile is not loaded.");
+          throw new Error("Профилът не е зареден.");
+      }
+      if (!todayQuestion?.id) {
+          throw new Error("Първо заредете въпрос за деня.");
       }
 
-      const result = await answerQuestion(Number(answerForm.questionId), {
+      const result = await answerQuestion(Number(todayQuestion.id), {
         familyId: Number(profile.familyId),
         answerText: answerForm.answerText
       });
@@ -387,7 +423,7 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-        throw new Error("Profile is not loaded.");
+          throw new Error("Профилът не е зареден.");
       }
 
       const result = await createMoment({
@@ -407,10 +443,10 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-        throw new Error("Profile is not loaded.");
+          throw new Error("Профилът не е зареден.");
       }
       if (!uploadFile) {
-        throw new Error("Please select an image file.");
+          throw new Error("Моля, изберете снимка.");
       }
 
       const result = await uploadImage(Number(profile.familyId), uploadFile);
@@ -423,7 +459,7 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-        throw new Error("Profile is not loaded.");
+          throw new Error("Профилът не е зареден.");
       }
 
       const result = await createPdfPreview({
@@ -456,7 +492,7 @@ export default function App() {
   async function onDownloadPdf() {
     await withBusy(async () => {
       if (!profile?.familyId) {
-        throw new Error("Profile is not loaded.");
+          throw new Error("Профилът не е зареден.");
       }
 
       const result = await downloadPdfBook({
@@ -475,8 +511,194 @@ export default function App() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      show("PDF downloaded.");
+      show("PDF файлът е изтеглен.");
     }, { authSensitive: true });
+  }
+
+  function renderActiveModule() {
+    if (activeModule === "profile") {
+      return (
+        <section className="card">
+          <h3>Моят профил</h3>
+          <p className="small-muted module-note">Вашето лично пространство и семейна принадлежност.</p>
+          <div className="info-grid" id="profileCard">
+            <InfoItem label="Потребител" value={profile ? `${profile.firstName} ${profile.lastName}` : "-"} />
+            <InfoItem label="Email" value={profile?.email || "-"} />
+            <InfoItem label="Семейство" value={profile?.familyName || family?.name || "-"} />
+            <InfoItem label="Статус" value={auth?.accessToken ? "Активна сесия" : "Неактивна сесия"} />
+          </div>
+        </section>
+      );
+    }
+
+    if (activeModule === "family") {
+      return (
+        <section className="card">
+          <div className="cardhead">
+            <h3>Вашето семейство</h3>
+          </div>
+          <div className="info-grid" id="familyCard">
+            <InfoItem label="Семейство" value={family?.name || "-"} />
+            <InfoItem label="Създадено от" value={resolveCreatedByName(family?.createdBy)} />
+            <InfoItem label="Създадено на" value={formatDate(family?.createdAt)} />
+          </div>
+          <div className="list" id="membersList">
+            {members.length === 0 ? <p className="small-muted">Все още няма данни.</p> : members.map((member) => (
+              <article className="list-item" key={member.id || `${member.email}-${member.role}`}>
+                <h4>{member.firstName} {member.lastName}</h4>
+                <div className="list-meta">{member.role} | {member.email}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    if (activeModule === "question") {
+      return (
+        <section className="card">
+          <div className="cardhead">
+            <h3>Въпрос за днес</h3>
+            <button id="todayQuestionBtn" type="button" onClick={onLoadTodayQuestion}>Зареди</button>
+          </div>
+          <p className="question-box" id="todayQuestionText">
+            {todayQuestion ? todayQuestion.title : "Натиснете \"Зареди\", за да получите въпрос за деня."}
+          </p>
+          <form className="grid2" id="answerForm" onSubmit={submitAnswer}>
+            <input name="answerText" type="text" placeholder="Вашият отговор" value={answerForm.answerText} onChange={updateForm(setAnswerForm)} required />
+            <button type="submit">Изпрати отговор</button>
+          </form>
+          <div className="cardhead compact">
+            <h3>Семейни отговори</h3>
+            <button id="loadAnswersBtn" type="button" onClick={onLoadAnswers}>Зареди</button>
+          </div>
+          <div className="list" id="answersList">
+            {answers.length === 0 ? <p className="small-muted">Все още няма данни.</p> : answers.map((answer) => (
+              <article className="list-item" key={answer.id || `${answer.authorName}-${answer.createdAt}`}>
+                <h4>{answer.questionTitle}</h4>
+                <p>{answer.answerText}</p>
+                <div className="list-meta">от {answer.authorName} | {formatDate(answer.createdAt)}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    if (activeModule === "moments") {
+      return (
+        <section className="card">
+          <div className="cardhead">
+            <h3>Семейни моменти</h3>
+            <button id="listMomentsBtn" type="button" onClick={onLoadMoments}>Зареди</button>
+          </div>
+          <form className="grid2" id="createMomentForm" onSubmit={submitMoment}>
+            <input name="title" type="text" placeholder="Заглавие" value={momentForm.title} onChange={updateForm(setMomentForm)} required />
+            <input name="description" type="text" placeholder="Описание" value={momentForm.description} onChange={updateForm(setMomentForm)} />
+            <input name="imageUrl" type="text" placeholder="Линк към снимка" value={momentForm.imageUrl} onChange={updateForm(setMomentForm)} />
+            <button type="submit">Добави момент</button>
+          </form>
+          <div className="list" id="momentsList">
+            {moments.length === 0 ? <p className="small-muted">Все още няма данни.</p> : moments.map((moment) => (
+              <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
+                <h4>{moment.title}</h4>
+                <p>{moment.description || "Няма описание"}</p>
+                <div className="list-meta">{formatDate(moment.createdAt)}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    if (activeModule === "upload") {
+      return (
+        <section className="card">
+          <h3>Качи снимка</h3>
+          <form className="row" id="uploadForm" onSubmit={submitUpload}>
+            <input
+              name="file"
+              type="file"
+              accept="image/*"
+              onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
+              required
+            />
+            <button type="submit">Качи</button>
+          </form>
+          <div className="small-muted" id="uploadResult">{uploadResult}</div>
+        </section>
+      );
+    }
+
+    if (activeModule === "timeline") {
+      return (
+        <section className="card">
+          <div className="cardhead">
+            <h3>Семейна хроника</h3>
+            <button id="loadTimelineBtn" type="button" onClick={onLoadTimeline}>Зареди</button>
+          </div>
+          <div className="list" id="timelineList">
+            {timeline.length === 0 ? <p className="small-muted">Все още няма данни.</p> : timeline.map((item) => (
+              <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
+                <h4>{item.type} | {item.title}</h4>
+                <p>{item.details || "Няма подробности"}</p>
+                <div className="list-meta">{item.author || "Семейство"} | {formatDate(item.createdAt)}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="card">
+        <h3>Семейна PDF книга (преглед)</h3>
+        <form className="grid2" id="pdfExportForm" onSubmit={submitPdfPreview}>
+          <label className="select-filter">
+            Период
+            <select name="period" value={pdfForm.period} onChange={updateForm(setPdfForm)}>
+              <option value="monthly">Текущ месец</option>
+              <option value="yearly">Текуща година</option>
+              <option value="custom">Персонален избор</option>
+            </select>
+          </label>
+          <label className="select-filter">
+            Стил
+            <select name="style" value={pdfForm.style} onChange={updateForm(setPdfForm)}>
+              <option value="family-story">Семейна история</option>
+              <option value="timeline">Хронологичен</option>
+              <option value="highlights">Акценти</option>
+            </select>
+          </label>
+          <label className="check-filter">
+            <input name="includeMoments" type="checkbox" checked={pdfForm.includeMoments} onChange={updateForm(setPdfForm)} /> Включи моменти
+          </label>
+          <label className="check-filter">
+            <input name="includeAnswers" type="checkbox" checked={pdfForm.includeAnswers} onChange={updateForm(setPdfForm)} /> Включи отговори
+          </label>
+          <button type="submit">Генерирай преглед</button>
+        </form>
+        {pdfPreviewUrl ? (
+          <button id="downloadPdfBtn" type="button" onClick={onDownloadPdf}>Изтегли PDF</button>
+        ) : (
+          <p className="small-muted">След генериране на преглед бутонът за изтегляне ще се появи тук.</p>
+        )}
+        <div className="info-grid" id="pdfPreviewCard">
+          <InfoItem label="Статус" value={pdfPreview?.status || "-"} />
+          <InfoItem label="Период" value={pdfPreview?.period || "-"} />
+          <InfoItem label="Стил" value={pdfPreview?.style || "-"} />
+          <InfoItem label="Моменти" value={pdfPreview?.includedMoments ?? "-"} />
+          <InfoItem label="Отговори" value={pdfPreview?.includedAnswers ?? "-"} />
+        </div>
+        {pdfPreviewUrl ? (
+          <iframe
+            title="PDF Preview"
+            src={pdfPreviewUrl}
+            style={{ width: "100%", minHeight: 420, border: "1px solid #e7ded2", borderRadius: 12, marginTop: 10 }}
+          />
+        ) : null}
+      </section>
+    );
   }
 
   return (
@@ -484,7 +706,7 @@ export default function App() {
       {bootstrapping ? (
         <section className="auth-screen">
           <div className="auth-card">
-            <p className="small-muted">Restoring session...</p>
+            <p className="small-muted">Възстановяване на сесия...</p>
           </div>
         </section>
       ) : null}
@@ -492,36 +714,36 @@ export default function App() {
         <section className="auth-screen" id="authScreen">
           <div className="auth-card">
             <div className="brand-row">
-              <div className="brand-mark">NV</div>
+                <div className="brand-mark app-logo" aria-label="Лого на приложението"></div>
               <div>
-                <h1>Nasheto Vreme</h1>
-                <p className="small-muted">Family space for moments and conversations</p>
+                  <h1>Нашето време</h1>
+                  <p className="small-muted">Семейно пространство за спомени и разговори</p>
               </div>
             </div>
 
             <div className="auth-tabs">
               <button className={tab === "login" ? "active" : ""} id="showLoginBtn" type="button" onClick={() => setTab("login")}>
-                Login
+                Вход
               </button>
               <button className={tab === "register" ? "active" : ""} id="showRegisterBtn" type="button" onClick={() => setTab("register")}>
-                Register
+                Регистрация
               </button>
             </div>
 
             {tab === "login" ? (
               <form className="auth-form" id="loginForm" onSubmit={submitLogin}>
                 <input name="email" type="email" placeholder="Email" value={loginForm.email} onChange={updateForm(setLoginForm)} required />
-                <input name="password" type="password" placeholder="Password" value={loginForm.password} onChange={updateForm(setLoginForm)} required />
-                <button disabled={busy} type="submit">{busy ? "Loading..." : "Login"}</button>
+                <input name="password" type="password" placeholder="Парола" value={loginForm.password} onChange={updateForm(setLoginForm)} required />
+                <button disabled={busy} type="submit">{busy ? "Зареждане..." : "Вход"}</button>
               </form>
             ) : (
               <form className="auth-form" id="registerForm" onSubmit={submitRegister}>
                 <input name="email" type="email" placeholder="Email" value={registerForm.email} onChange={updateForm(setRegisterForm)} required />
-                <input name="password" type="password" placeholder="Password" value={registerForm.password} onChange={updateForm(setRegisterForm)} required />
-                <input name="firstName" type="text" placeholder="First name" value={registerForm.firstName} onChange={updateForm(setRegisterForm)} required />
-                <input name="lastName" type="text" placeholder="Last name" value={registerForm.lastName} onChange={updateForm(setRegisterForm)} required />
-                <input name="familyName" type="text" placeholder="Family name" value={registerForm.familyName} onChange={updateForm(setRegisterForm)} required />
-                <button disabled={busy} type="submit">{busy ? "Loading..." : "Create account"}</button>
+                <input name="password" type="password" placeholder="Парола" value={registerForm.password} onChange={updateForm(setRegisterForm)} required />
+                <input name="firstName" type="text" placeholder="Име" value={registerForm.firstName} onChange={updateForm(setRegisterForm)} required />
+                <input name="lastName" type="text" placeholder="Фамилия" value={registerForm.lastName} onChange={updateForm(setRegisterForm)} required />
+                <input name="familyName" type="text" placeholder="Име на семейство" value={registerForm.familyName} onChange={updateForm(setRegisterForm)} required />
+                <button disabled={busy} type="submit">{busy ? "Зареждане..." : "Създай профил"}</button>
               </form>
             )}
 
@@ -532,186 +754,48 @@ export default function App() {
       {!bootstrapping && isLogged ? (
         <section className="shell" id="appScreen">
           <aside className="sidebar">
-            <div className="brand-row">
-              <div className="brand-mark">NV</div>
-              <div>
-                <strong>Nasheto Vreme</strong>
-                <p className="small-muted">Family dashboard</p>
-              </div>
-            </div>
-
-            <form className="config-form" id="configForm" onSubmit={submitConfig}>
-              <label htmlFor="apiBaseUrl">API Base URL</label>
-              <input
-                id="apiBaseUrl"
-                name="apiBaseUrl"
-                type="text"
-                placeholder="http://localhost:8088/api/v1"
-                value={apiBaseUrl}
-                onChange={(event) => setApiBaseUrlState(event.target.value)}
-              />
-              <button type="submit">Save</button>
-            </form>
-
             <div className="user-meta">
-              <p id="profileInfo">{profileInfo}</p>
-              <button id="meBtn" type="button" onClick={onRefreshProfile}>Refresh profile</button>
-              <button id="refreshBtn" type="button" onClick={onRefreshToken}>Refresh token</button>
-              <button id="logoutBtn" className="secondary" type="button" onClick={logout}>Logout</button>
+              <div className="brand-row brand-row-side">
+                <div className="brand-mark app-logo" aria-label="Лого на приложението"></div>
+                <p className="brand-side-title">Нашето време</p>
+              </div>
+              <button id="logoutBtn" className="secondary logout-btn" type="button" onClick={logout}>Изход</button>
             </div>
+
+            <section className="sidebar-card module-card">
+              <div className="module-menu">
+                {dashboardModules.map((module) => (
+                  <button
+                    key={module.key}
+                    type="button"
+                    className={activeModule === module.key ? "module-tab active" : "module-tab"}
+                    onClick={() => setActiveModule(module.key)}
+                  >
+                    {module.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="sidebar-card mood-card">
+              <h3>{sidebarHighlight.title}</h3>
+              <p className="mood-quote">"{sidebarHighlight.text}"</p>
+              <div className="mood-ornaments" aria-hidden="true">
+                <span className="ornament"></span>
+                <span className="ornament ornament-center"></span>
+                <span className="ornament"></span>
+              </div>
+            </section>
           </aside>
 
           <main className="main-content">
             <div className="topbar">
-              <h2>Welcome back</h2>
-              <p className="small-muted" id="configInfo">Using backend: {getApiBaseUrl()}</p>
+              <h2>{dashboardModules.find((module) => module.key === activeModule)?.label || "Добре дошли"}</h2>
+              <p className="small-muted">{profileInfo}</p>
             </div>
+            {renderActiveModule()}
 
-            <section className="card soft">
-              <h3>Your profile</h3>
-              <div className="info-grid" id="profileCard">
-                <InfoItem label="Name" value={profile ? `${profile.firstName} ${profile.lastName}` : "-"} />
-                <InfoItem label="Email" value={profile?.email || "-"} />
-                <InfoItem label="Role" value={profile?.role || "-"} />
-                <InfoItem label="Family" value={profile?.familyName || family?.name || "-"} />
-              </div>
-            </section>
-
-            <section className="card">
-              <div className="cardhead">
-                <h3>Your family</h3>
-                <button id="loadFamilyBtn" type="button" onClick={onLoadFamily}>Refresh</button>
-              </div>
-              <div className="info-grid" id="familyCard">
-                <InfoItem label="Family" value={family?.name || "-"} />
-                <InfoItem label="Created by" value={resolveCreatedByName(family?.createdBy)} />
-                <InfoItem label="Created at" value={formatDate(family?.createdAt)} />
-              </div>
-              <div className="list" id="membersList">
-                {members.length === 0 ? <p className="small-muted">No items yet.</p> : members.map((member) => (
-                  <article className="list-item" key={member.id || `${member.email}-${member.role}`}>
-                    <h4>{member.firstName} {member.lastName}</h4>
-                    <div className="list-meta">{member.role} | {member.email}</div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="card">
-              <div className="cardhead">
-                <h3>Question for today</h3>
-                <button id="todayQuestionBtn" type="button" onClick={onLoadTodayQuestion}>Load</button>
-              </div>
-              <p className="question-box" id="todayQuestionText">
-                {todayQuestion ? todayQuestion.title : "Press \"Load\" to get today's question."}
-              </p>
-              <form className="grid2" id="answerForm" onSubmit={submitAnswer}>
-                <input name="questionId" type="number" placeholder="Question ID" value={answerForm.questionId} onChange={updateForm(setAnswerForm)} required />
-                <input name="answerText" type="text" placeholder="Answer text" value={answerForm.answerText} onChange={updateForm(setAnswerForm)} required />
-                <button type="submit">Send answer</button>
-              </form>
-              <div className="cardhead compact">
-                <h3>Family answers</h3>
-                <button id="loadAnswersBtn" type="button" onClick={onLoadAnswers}>Load</button>
-              </div>
-              <div className="list" id="answersList">
-                {answers.length === 0 ? <p className="small-muted">No items yet.</p> : answers.map((answer) => (
-                  <article className="list-item" key={answer.id || `${answer.authorName}-${answer.createdAt}`}>
-                    <h4>{answer.questionTitle}</h4>
-                    <p>{answer.answerText}</p>
-                    <div className="list-meta">by {answer.authorName} | {formatDate(answer.createdAt)}</div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="card">
-              <div className="cardhead">
-                <h3>Family moments</h3>
-                <button id="listMomentsBtn" type="button" onClick={onLoadMoments}>Load</button>
-              </div>
-              <form className="grid2" id="createMomentForm" onSubmit={submitMoment}>
-                <input name="title" type="text" placeholder="Title" value={momentForm.title} onChange={updateForm(setMomentForm)} required />
-                <input name="description" type="text" placeholder="Description" value={momentForm.description} onChange={updateForm(setMomentForm)} />
-                <input name="imageUrl" type="text" placeholder="Image URL" value={momentForm.imageUrl} onChange={updateForm(setMomentForm)} />
-                <button type="submit">Create moment</button>
-              </form>
-              <div className="list" id="momentsList">
-                {moments.length === 0 ? <p className="small-muted">No items yet.</p> : moments.map((moment) => (
-                  <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
-                    <h4>{moment.title}</h4>
-                    <p>{moment.description || "No description"}</p>
-                    <div className="list-meta">{formatDate(moment.createdAt)}</div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="card">
-              <h3>Upload image</h3>
-              <form className="row" id="uploadForm" onSubmit={submitUpload}>
-                <input
-                  name="file"
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
-                  required
-                />
-                <button type="submit">Upload</button>
-              </form>
-              <div className="small-muted" id="uploadResult">{uploadResult}</div>
-            </section>
-
-            <section className="card">
-              <div className="cardhead">
-                <h3>Family timeline</h3>
-                <button id="loadTimelineBtn" type="button" onClick={onLoadTimeline}>Load</button>
-              </div>
-              <div className="list" id="timelineList">
-                {timeline.length === 0 ? <p className="small-muted">No items yet.</p> : timeline.map((item) => (
-                  <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
-                    <h4>{item.type} | {item.title}</h4>
-                    <p>{item.details || "No details"}</p>
-                    <div className="list-meta">{item.author || "Family"} | {formatDate(item.createdAt)}</div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="card">
-              <h3>Family PDF book (preview)</h3>
-              <form className="grid2" id="pdfExportForm" onSubmit={submitPdfPreview}>
-                <input name="period" type="text" placeholder="Period (monthly/yearly/custom)" value={pdfForm.period} onChange={updateForm(setPdfForm)} required />
-                <input name="style" type="text" placeholder="Style" value={pdfForm.style} onChange={updateForm(setPdfForm)} required />
-                <label>
-                  <input name="includeMoments" type="checkbox" checked={pdfForm.includeMoments} onChange={updateForm(setPdfForm)} /> Include moments
-                </label>
-                <label>
-                  <input name="includeAnswers" type="checkbox" checked={pdfForm.includeAnswers} onChange={updateForm(setPdfForm)} /> Include answers
-                </label>
-                <button type="submit">Generate preview</button>
-              </form>
-              <button id="downloadPdfBtn" type="button" onClick={onDownloadPdf}>Download PDF</button>
-              <div className="info-grid" id="pdfPreviewCard">
-                <InfoItem label="Status" value={pdfPreview?.status || "-"} />
-                <InfoItem label="Period" value={pdfPreview?.period || "-"} />
-                <InfoItem label="Style" value={pdfPreview?.style || "-"} />
-                <InfoItem label="Moments" value={pdfPreview?.includedMoments ?? "-"} />
-                <InfoItem label="Answers" value={pdfPreview?.includedAnswers ?? "-"} />
-              </div>
-              {pdfPreviewUrl ? (
-                <iframe
-                  title="PDF Preview"
-                  src={pdfPreviewUrl}
-                  style={{ width: "100%", minHeight: 420, border: "1px solid #e7ded2", borderRadius: 12, marginTop: 10 }}
-                />
-              ) : null}
-            </section>
-
-            <section className="card">
-              <h3>Debug output</h3>
-              <pre id="output">{output}</pre>
-            </section>
+            {/* Debug output intentionally hidden from end users. */}
           </main>
         </section>
       ) : null}

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class RefreshTokenCookieProperties {
 
     private String name = "nv_refresh_token";
-    private String path = "/api/v1/auth";
+    private String path = "/";
     private String sameSite = "Lax";
     private boolean secure;
 }

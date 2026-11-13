@@ -18,7 +18,7 @@ app:
   auth:
     refresh-cookie:
       name: ${APP_REFRESH_COOKIE_NAME:nv_refresh_token}
-      path: ${APP_REFRESH_COOKIE_PATH:/api/v1/auth}
+      path: ${APP_REFRESH_COOKIE_PATH:/}
       same-site: ${APP_REFRESH_COOKIE_SAME_SITE:Lax}
       secure: ${APP_REFRESH_COOKIE_SECURE:true}
   upload:
