@@ -73,7 +73,8 @@ public class UploadService {
         }
 
         try {
-            String contentType = Files.probeContentType(target);
+            String detectedImageType = detectImageType(target);
+            String contentType = detectedImageType != null ? detectedImageType : Files.probeContentType(target);
             if (contentType == null || contentType.isBlank()) {
                 contentType = "application/octet-stream";
             }
@@ -164,6 +165,44 @@ public class UploadService {
             }
         }
         return true;
+    }
+
+    private static String detectImageType(Path filePath) {
+        byte[] header = new byte[12];
+        int bytesRead;
+        try (InputStream inputStream = Files.newInputStream(filePath)) {
+            bytesRead = inputStream.read(header);
+        } catch (IOException ex) {
+            return null;
+        }
+
+        if (bytesRead < 3) {
+            return null;
+        }
+
+        if (matches(header, bytesRead, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF})) {
+            return "image/jpeg";
+        }
+
+        if (matches(header, bytesRead, new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A})) {
+            return "image/png";
+        }
+
+        if (matches(header, bytesRead, "GIF87a".getBytes(StandardCharsets.US_ASCII))
+                || matches(header, bytesRead, "GIF89a".getBytes(StandardCharsets.US_ASCII))) {
+            return "image/gif";
+        }
+
+        if (bytesRead >= 12
+                && matches(header, bytesRead, "RIFF".getBytes(StandardCharsets.US_ASCII))
+                && header[8] == 'W'
+                && header[9] == 'E'
+                && header[10] == 'B'
+                && header[11] == 'P') {
+            return "image/webp";
+        }
+
+        return null;
     }
 
     public record StoredUploadFile(Path path, String contentType, String fileName) {

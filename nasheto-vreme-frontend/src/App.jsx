@@ -44,6 +44,8 @@ const dashboardModules = [
   { key: "pdf", label: "Семейна PDF книга" }
 ];
 
+const ACTIVE_MODULE_KEY = "nv_active_module";
+
 const sidebarHighlights = [
   {
     title: "Семейна искра",
@@ -72,6 +74,17 @@ function pickSidebarHighlight() {
   return sidebarHighlights[index];
 }
 
+function getInitialActiveModule() {
+  if (typeof globalThis === "undefined" || !globalThis.sessionStorage) {
+    return "profile";
+  }
+  const saved = globalThis.sessionStorage.getItem(ACTIVE_MODULE_KEY);
+  if (saved && dashboardModules.some((module) => module.key === saved)) {
+    return saved;
+  }
+  return "profile";
+}
+
 export default function App() {
   const [tab, setTab] = useState("login");
   const [auth, setAuthState] = useState(getAuth());
@@ -90,7 +103,7 @@ export default function App() {
   const [todayQuestion, setTodayQuestion] = useState(null);
   const [output, setOutput] = useState("Ready.");
   const [bootstrapping, setBootstrapping] = useState(true);
-  const [activeModule, setActiveModule] = useState("profile");
+  const [activeModule, setActiveModule] = useState(() => getInitialActiveModule());
   const [sidebarHighlight] = useState(() => pickSidebarHighlight());
 
   const [loginForm, setLoginForm] = useState(initialLogin);
@@ -213,6 +226,13 @@ export default function App() {
       }
     };
   }, [pdfPreviewUrl]);
+
+  useEffect(() => {
+    if (typeof globalThis === "undefined" || !globalThis.sessionStorage) {
+      return;
+    }
+    globalThis.sessionStorage.setItem(ACTIVE_MODULE_KEY, activeModule);
+  }, [activeModule]);
 
   function handleAuthError(error) {
     clearAuth();
@@ -830,7 +850,10 @@ function AttachmentPreview({ filePath, label }) {
         }
 
         const contentType = result.contentType || "";
-        const image = contentType.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(result.fileName);
+        const imageByName = /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(result.fileName);
+        const imageByContentType = contentType.startsWith("image/");
+        const imageBySignature = await isImageBlob(result.blob);
+        const image = imageByContentType || imageByName || imageBySignature;
         objectUrl = window.URL.createObjectURL(result.blob);
 
         setIsImage(image);
@@ -872,5 +895,45 @@ function AttachmentPreview({ filePath, label }) {
   }
 
   return null;
+}
+
+async function isImageBlob(blob) {
+  if (!blob || typeof blob.arrayBuffer !== "function") {
+    return false;
+  }
+
+  const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  if (header.length < 3) {
+    return false;
+  }
+
+  const isJpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+  const isPng = header.length >= 8
+    && header[0] === 0x89
+    && header[1] === 0x50
+    && header[2] === 0x4e
+    && header[3] === 0x47
+    && header[4] === 0x0d
+    && header[5] === 0x0a
+    && header[6] === 0x1a
+    && header[7] === 0x0a;
+  const isGif = header.length >= 6
+    && header[0] === 0x47
+    && header[1] === 0x49
+    && header[2] === 0x46
+    && header[3] === 0x38
+    && (header[4] === 0x37 || header[4] === 0x39)
+    && header[5] === 0x61;
+  const isWebp = header.length >= 12
+    && header[0] === 0x52
+    && header[1] === 0x49
+    && header[2] === 0x46
+    && header[3] === 0x46
+    && header[8] === 0x57
+    && header[9] === 0x45
+    && header[10] === 0x42
+    && header[11] === 0x50;
+
+  return isJpeg || isPng || isGif || isWebp;
 }
 
