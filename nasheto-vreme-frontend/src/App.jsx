@@ -37,9 +37,8 @@ const initialPdf = {
 const dashboardModules = [
   { key: "profile", label: "Моят профил" },
   { key: "family", label: "Вашето семейство" },
-  { key: "question", label: "Въпрос за днес" },
+  { key: "question", label: "Въпрос на деня" },
   { key: "moments", label: "Семейни моменти" },
-  { key: "upload", label: "Качи снимка" },
   { key: "timeline", label: "Семейна хроника" },
   { key: "pdf", label: "Семейна PDF книга" }
 ];
@@ -87,7 +86,6 @@ export default function App() {
   const [timeline, setTimeline] = useState([]);
   const [pdfPreview, setPdfPreview] = useState(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
-  const [uploadResult, setUploadResult] = useState("");
   const [todayQuestion, setTodayQuestion] = useState(null);
   const [output, setOutput] = useState("Ready.");
   const [bootstrapping, setBootstrapping] = useState(true);
@@ -154,7 +152,6 @@ export default function App() {
       window.URL.revokeObjectURL(pdfPreviewUrl);
     }
     setPdfPreviewUrl("");
-    setUploadResult("");
     setTodayQuestion(null);
     setAnswerForm(initialAnswer);
     setMomentForm(initialMoment);
@@ -298,6 +295,12 @@ export default function App() {
     return result;
   }
 
+  async function loadTodayQuestionData() {
+    const result = await getTodayQuestion();
+    setTodayQuestion(result);
+    return result;
+  }
+
   async function refreshDashboardData() {
     const profileResult = await loadProfile();
     if (!profileResult?.familyId) {
@@ -308,7 +311,8 @@ export default function App() {
       loadFamilyData(profileResult),
       loadMoments(profileResult),
       loadAnswers(profileResult),
-      loadTimeline(profileResult)
+      loadTimeline(profileResult),
+      loadTodayQuestionData()
     ]);
   }
 
@@ -391,14 +395,6 @@ export default function App() {
     }, { authSensitive: true });
   }
 
-  async function onLoadTodayQuestion() {
-    await withBusy(async () => {
-      const result = await getTodayQuestion();
-      setTodayQuestion(result);
-      show(result);
-    });
-  }
-
   async function submitAnswer(event) {
     event.preventDefault();
     await withBusy(async () => {
@@ -426,31 +422,22 @@ export default function App() {
           throw new Error("Профилът не е зареден.");
       }
 
+      let resolvedImageUrl = momentForm.imageUrl;
+      if (uploadFile) {
+        const uploadResponse = await uploadImage(Number(profile.familyId), uploadFile);
+        resolvedImageUrl = uploadResponse.relativePath || resolvedImageUrl;
+      }
+
       const result = await createMoment({
         familyId: Number(profile.familyId),
         title: momentForm.title,
         description: momentForm.description,
-        imageUrl: momentForm.imageUrl
+        imageUrl: resolvedImageUrl
       });
 
       setMomentForm(initialMoment);
+      setUploadFile(null);
       await loadMoments();
-      show(result);
-    }, { authSensitive: true });
-  }
-
-  async function submitUpload(event) {
-    event.preventDefault();
-    await withBusy(async () => {
-      if (!profile?.familyId) {
-          throw new Error("Профилът не е зареден.");
-      }
-      if (!uploadFile) {
-          throw new Error("Моля, изберете снимка.");
-      }
-
-      const result = await uploadImage(Number(profile.familyId), uploadFile);
-      setUploadResult(`Uploaded: ${result.fileName}`);
       show(result);
     }, { authSensitive: true });
   }
@@ -558,11 +545,10 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>Въпрос за днес</h3>
-            <button id="todayQuestionBtn" type="button" onClick={onLoadTodayQuestion}>Зареди</button>
+            <h3>Въпрос на деня</h3>
           </div>
           <p className="question-box" id="todayQuestionText">
-            {todayQuestion ? todayQuestion.title : "Натиснете \"Зареди\", за да получите въпрос за деня."}
+            {todayQuestion ? todayQuestion.title : "Въпросът за деня се зарежда..."}
           </p>
           <form className="grid2" id="answerForm" onSubmit={submitAnswer}>
             <input name="answerText" type="text" placeholder="Вашият отговор" value={answerForm.answerText} onChange={updateForm(setAnswerForm)} required />
@@ -595,28 +581,7 @@ export default function App() {
           <form className="grid2" id="createMomentForm" onSubmit={submitMoment}>
             <input name="title" type="text" placeholder="Заглавие" value={momentForm.title} onChange={updateForm(setMomentForm)} required />
             <input name="description" type="text" placeholder="Описание" value={momentForm.description} onChange={updateForm(setMomentForm)} />
-            <input name="imageUrl" type="text" placeholder="Линк към снимка" value={momentForm.imageUrl} onChange={updateForm(setMomentForm)} />
-            <button type="submit">Добави момент</button>
-          </form>
-          <div className="list" id="momentsList">
-            {moments.length === 0 ? <p className="small-muted">Все още няма данни.</p> : moments.map((moment) => (
-              <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
-                <h4>{moment.title}</h4>
-                <p>{moment.description || "Няма описание"}</p>
-                <div className="list-meta">{formatDate(moment.createdAt)}</div>
-              </article>
-            ))}
-          </div>
-        </section>
-      );
-    }
-
-    if (activeModule === "upload") {
-      return (
-        <section className="card">
-          <h3>Качи снимка</h3>
-          <form className="row" id="uploadForm" onSubmit={submitUpload}>
-            <div className="file-picker">
+            <div className="upload-inline" id="uploadForm">
               <input
                 id="uploadFileInput"
                 className="file-input-hidden"
@@ -626,11 +591,19 @@ export default function App() {
                 onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
               />
               <label htmlFor="uploadFileInput" className="file-trigger">Избери снимка</label>
-              <span className="file-name">{uploadFile?.name || "Няма избран файл"}</span>
+              <button type="submit">Добави момент</button>
             </div>
-            <button type="submit">Качи</button>
           </form>
-          <div className="small-muted" id="uploadResult">{uploadResult}</div>
+          <span id="uploadResult" className="hidden" aria-hidden="true"></span>
+          <div className="list" id="momentsList">
+            {moments.length === 0 ? <p className="small-muted">Все още няма данни.</p> : moments.map((moment) => (
+              <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
+                <h4>{moment.title}</h4>
+                <p>{moment.description || "Няма описание"}</p>
+                <div className="list-meta">{formatDate(moment.createdAt)}</div>
+              </article>
+            ))}
+          </div>
         </section>
       );
     }

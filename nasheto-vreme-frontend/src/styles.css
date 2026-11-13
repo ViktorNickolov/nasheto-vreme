@@ -48,6 +48,19 @@ button {
   font: inherit;
 }
 
+textarea,
+option {
+  font: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font: inherit;
+  font-style: normal;
+  color: #8d8072;
+  opacity: 1;
+}
+
 input:not([type="checkbox"]):focus,
 select:focus {
   outline: none;
@@ -191,11 +204,11 @@ button:hover {
 }
 
 .shell {
-  max-width: 1180px;
+  max-width: min(1380px, calc(100vw - 28px));
   margin: 0 auto;
   padding: 20px;
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 16px;
   animation: pageIn 280ms ease;
 }
@@ -211,12 +224,21 @@ button:hover {
 .sidebar {
   padding: 18px;
   display: grid;
+  grid-template-rows: auto auto 1fr;
   gap: 18px;
   align-content: start;
   position: sticky;
   top: 20px;
   height: fit-content;
   background: linear-gradient(175deg, #fffdf9 0%, #f8f1e7 100%);
+}
+
+.sidebar::after {
+  content: "";
+  border-radius: 16px;
+  border: 1px dashed #dbcdbf;
+  background: linear-gradient(165deg, rgba(214, 154, 125, 0.12) 0%, rgba(125, 157, 116, 0.1) 100%);
+  min-height: 120px;
 }
 
 .config-form {
@@ -570,6 +592,14 @@ button:hover {
   justify-self: start;
 }
 
+#createMomentForm button[type="submit"] {
+  height: 36px;
+  min-width: 130px;
+  padding: 0 12px;
+  font-size: inherit;
+  margin-left: auto;
+}
+
 .row {
   display: flex;
   gap: 8px;
@@ -621,6 +651,23 @@ button:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.upload-inline {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.upload-inline .file-name {
+  max-width: 220px;
+}
+
+.upload-inline button {
+  height: 38px;
+  min-width: 90px;
 }
 
 pre {
