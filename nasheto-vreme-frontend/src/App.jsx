@@ -620,7 +620,7 @@ export default function App() {
             {moments.length === 0 ? <p className="small-muted">Все още няма данни.</p> : moments.map((moment) => (
               <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
                 <h4>{moment.title}</h4>
-                {moment.imageUrl ? <AttachmentPreview filePath={moment.imageUrl} label={moment.title} /> : null}
+                {moment.imageUrl ? <AttachmentPreview filePath={moment.imageUrl} /> : null}
                 <p>{moment.description || "Няма описание"}</p>
                 <div className="list-meta">{formatDate(moment.createdAt)}</div>
               </article>
@@ -641,7 +641,7 @@ export default function App() {
             {timeline.length === 0 ? <p className="small-muted">Все още няма данни.</p> : timeline.map((item) => (
               <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
                 <h4>{item.type} | {item.title}</h4>
-                {item.imageUrl ? <AttachmentPreview filePath={item.imageUrl} label={item.title} /> : null}
+                {item.imageUrl ? <AttachmentPreview filePath={item.imageUrl} /> : null}
                 <p>{item.details || "Няма подробности"}</p>
                 <div className="list-meta">{item.author || "Семейство"} | {formatDate(item.createdAt)}</div>
               </article>
@@ -814,10 +814,11 @@ function InfoItem({ label, value }) {
   );
 }
 
-function AttachmentPreview({ filePath, label }) {
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [isImage, setIsImage] = useState(false);
+function AttachmentPreview({ filePath }) {
   const [fileHref, setFileHref] = useState("");
+  const [contentType, setContentType] = useState("");
+  const [downloadName, setDownloadName] = useState("attachment");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     let disposed = false;
@@ -829,16 +830,11 @@ function AttachmentPreview({ filePath, label }) {
       }
 
       if (/^https?:\/\//i.test(filePath)) {
-        const image = /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(filePath);
         if (!disposed) {
-          setIsImage(image);
-          if (image) {
-            setPreviewUrl(filePath);
-            setFileHref("");
-          } else {
-            setFileHref(filePath);
-            setPreviewUrl("");
-          }
+          setFileHref(filePath);
+          setContentType("");
+          const nameFromUrl = filePath.split("/").pop();
+          setDownloadName(nameFromUrl || "attachment");
         }
         return;
       }
@@ -849,33 +845,24 @@ function AttachmentPreview({ filePath, label }) {
           return;
         }
 
-        const contentType = result.contentType || "";
-        const imageByName = /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(result.fileName);
-        const imageByContentType = contentType.startsWith("image/");
-        const imageBySignature = await isImageBlob(result.blob);
-        const image = imageByContentType || imageByName || imageBySignature;
         objectUrl = window.URL.createObjectURL(result.blob);
-
-        setIsImage(image);
-        if (image) {
-          setPreviewUrl(objectUrl);
-          setFileHref("");
-        } else {
-          setFileHref(objectUrl);
-          setPreviewUrl("");
-        }
+        setFileHref(objectUrl);
+        setContentType(result.contentType || "");
+        setDownloadName(result.fileName || "attachment");
       } catch {
         if (!disposed) {
-          setIsImage(false);
-          setPreviewUrl("");
           setFileHref("");
+          setContentType("");
+          setDownloadName("attachment");
+          setIsPreviewOpen(false);
         }
       }
     }
 
-    setIsImage(false);
-    setPreviewUrl("");
     setFileHref("");
+    setContentType("");
+    setDownloadName("attachment");
+    setIsPreviewOpen(false);
     loadAttachment();
 
     return () => {
@@ -886,54 +873,46 @@ function AttachmentPreview({ filePath, label }) {
     };
   }, [filePath]);
 
-  if (isImage && previewUrl) {
-    return <img className="timeline-attachment" src={previewUrl} alt={label || "Прикачена снимка"} />;
-  }
+  useEffect(() => {
+    if (!isPreviewOpen) {
+      return;
+    }
+
+    function onKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsPreviewOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isPreviewOpen]);
 
   if (fileHref) {
-    return <a className="timeline-file-link" href={fileHref} target="_blank" rel="noreferrer">Прикачен файл</a>;
+    const isImage = contentType.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(downloadName);
+    return (
+      <>
+        <div className="timeline-file-actions">
+          <button className="timeline-link-button" type="button" onClick={() => setIsPreviewOpen(true)}>Виж</button>
+          <a className="timeline-download-link" href={fileHref} download={downloadName}>Свали</a>
+        </div>
+        {isPreviewOpen ? (
+          <div className="attachment-modal-backdrop" onClick={() => setIsPreviewOpen(false)} role="presentation">
+            <div className="attachment-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+              <button className="attachment-modal-close" type="button" onClick={() => setIsPreviewOpen(false)}>Затвори</button>
+              {isImage ? (
+                <img className="attachment-modal-image" src={fileHref} alt="Преглед" />
+              ) : (
+                <iframe className="attachment-modal-frame" src={fileHref} title="Преглед на файл" />
+              )}
+            </div>
+          </div>
+        ) : null}
+      </>
+    );
   }
 
   return null;
 }
 
-async function isImageBlob(blob) {
-  if (!blob || typeof blob.arrayBuffer !== "function") {
-    return false;
-  }
-
-  const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
-  if (header.length < 3) {
-    return false;
-  }
-
-  const isJpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
-  const isPng = header.length >= 8
-    && header[0] === 0x89
-    && header[1] === 0x50
-    && header[2] === 0x4e
-    && header[3] === 0x47
-    && header[4] === 0x0d
-    && header[5] === 0x0a
-    && header[6] === 0x1a
-    && header[7] === 0x0a;
-  const isGif = header.length >= 6
-    && header[0] === 0x47
-    && header[1] === 0x49
-    && header[2] === 0x46
-    && header[3] === 0x38
-    && (header[4] === 0x37 || header[4] === 0x39)
-    && header[5] === 0x61;
-  const isWebp = header.length >= 12
-    && header[0] === 0x52
-    && header[1] === 0x49
-    && header[2] === 0x46
-    && header[3] === 0x46
-    && header[8] === 0x57
-    && header[9] === 0x45
-    && header[10] === 0x42
-    && header[11] === 0x50;
-
-  return isJpeg || isPng || isGif || isWebp;
-}
 

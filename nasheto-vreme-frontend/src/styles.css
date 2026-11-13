@@ -528,6 +528,104 @@ button:hover {
   font-size: 12px;
 }
 
+.timeline-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 8px;
+  flex-wrap: wrap;
+}
+
+.timeline-file-link,
+.timeline-download-link {
+  color: #6f6256;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.timeline-link-button {
+  border: 0;
+  background: transparent;
+  color: #6f6256;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 0;
+  height: auto;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.timeline-link-button:hover {
+  transform: none;
+  filter: none;
+}
+
+.timeline-file-link:hover,
+.timeline-download-link:hover,
+.timeline-link-button:hover {
+  text-decoration: underline;
+}
+
+.attachment-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(33, 28, 22, 0.24) 0%, rgba(33, 28, 22, 0.14) 38%, rgba(33, 28, 22, 0) 68%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  z-index: 1200;
+}
+
+.attachment-modal {
+  width: auto;
+  max-width: 82vw;
+  max-height: 80vh;
+  position: relative;
+  background: #fffdf9;
+  border: 1px solid #d9cdbf;
+  border-radius: 16px;
+  padding: 42px 10px 10px;
+  box-shadow: 0 16px 36px rgba(46, 37, 30, 0.26);
+  display: grid;
+  gap: 8px;
+}
+
+.attachment-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  height: 32px;
+  min-width: 84px;
+  font-size: 12px;
+  padding: 0 10px;
+}
+
+.attachment-modal-close:hover {
+  transform: none;
+}
+
+.attachment-modal-image {
+  display: block;
+  width: auto;
+  max-width: min(78vw, 860px);
+  max-height: 66vh;
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f4ece1;
+}
+
+.attachment-modal-frame {
+  width: min(78vw, 860px);
+  height: min(62vh, 560px);
+  border: 1px solid #ddd0c1;
+  border-radius: 10px;
+  background: #fff;
+}
+
 .timeline-attachment {
   display: block;
   width: min(100%, 320px);
@@ -536,6 +634,21 @@ button:hover {
   border: 1px solid var(--line);
   border-radius: 10px;
   margin: 6px 0 8px;
+}
+
+.timeline-preview-link {
+  display: inline-block;
+}
+
+.timeline-file-block {
+  margin: 2px 0 8px;
+}
+
+.timeline-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .timeline-file-link {
@@ -548,7 +661,20 @@ button:hover {
   font-weight: 600;
 }
 
+.timeline-download-link {
+  display: inline-flex;
+  align-items: center;
+  margin: 6px 0 8px;
+  color: #7a6b5e;
+  text-decoration: none;
+  font-weight: 600;
+}
+
 .timeline-file-link:hover {
+  text-decoration: underline;
+}
+
+.timeline-download-link:hover {
   text-decoration: underline;
 }
 
