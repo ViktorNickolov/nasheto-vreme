@@ -327,27 +327,56 @@ button:hover {
 
 .mood-ornaments {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  justify-content: flex-start;
+  margin-top: 2px;
 }
 
-.ornament {
-  width: 24px;
+.polaroid-mini {
+  width: 58px;
+  padding: 5px 5px 8px;
+  border-radius: 7px;
+  background: #fff;
+  border: 1px solid #decebe;
+  box-shadow: 0 6px 14px rgba(95, 79, 65, 0.16);
+  transform: rotate(-5deg);
+}
+
+.polaroid-image {
+  height: 34px;
+  border-radius: 5px;
+  background: linear-gradient(155deg, #edf3e6 0%, #f5e4d8 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.polaroid-image::before {
+  content: "";
+  position: absolute;
+  width: 12px;
   height: 12px;
-  border-top: 2px solid #c6896d;
-  border-bottom: 2px solid #7e9d74;
+  border-radius: 50%;
+  background: #efc0a5;
+  top: 7px;
+  left: 8px;
+}
+
+.polaroid-image::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 7px;
+  height: 10px;
   border-radius: 999px;
-  transform: rotate(-8deg);
-  opacity: 0.88;
+  background: linear-gradient(90deg, #7d9d74 0%, #6a8c62 100%);
 }
 
-.ornament-center {
-  width: 32px;
-  transform: rotate(0deg) scale(1.05);
-}
-
-.mood-ornaments .ornament:last-child {
-  transform: rotate(8deg);
+.polaroid-line {
+  margin: 6px auto 0;
+  width: 24px;
+  height: 2px;
+  border-radius: 999px;
+  background: #d5c2af;
 }
 
 .sidebar-card h3 {
@@ -546,6 +575,52 @@ button:hover {
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 10px;
+}
+
+.file-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.file-trigger {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px solid #d8ccbe;
+  background: linear-gradient(135deg, #efe5d9, #e5d6c6);
+  color: #66584b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.12s ease, transform 0.12s ease;
+}
+
+.file-trigger:hover {
+  filter: brightness(0.98);
+  transform: translateY(-1px);
+}
+
+.file-name {
+  color: #7f7265;
+  font-size: 13px;
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 pre {

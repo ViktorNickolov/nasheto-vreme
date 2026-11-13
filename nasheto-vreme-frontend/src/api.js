@@ -4,6 +4,13 @@ const AUTH_STATE_KEY = "nv_auth_state";
 
 let authState = null;
 
+function getSessionStorageSafe() {
+  if (typeof globalThis === "undefined" || !globalThis.sessionStorage) {
+    return null;
+  }
+  return globalThis.sessionStorage;
+}
+
 export function getApiBaseUrl() {
   return localStorage.getItem(API_URL_KEY) || "http://localhost:8088/api/v1";
 }
@@ -13,13 +20,14 @@ export function setApiBaseUrl(url) {
 }
 
 export function getAuth() {
+  const storage = getSessionStorageSafe();
   if (!authState) {
-    const stored = sessionStorage.getItem(AUTH_STATE_KEY);
+    const stored = storage?.getItem(AUTH_STATE_KEY);
     if (stored) {
       try {
         authState = JSON.parse(stored);
       } catch {
-        sessionStorage.removeItem(AUTH_STATE_KEY);
+        storage?.removeItem(AUTH_STATE_KEY);
       }
     }
   }
@@ -27,6 +35,7 @@ export function getAuth() {
 }
 
 export function setAuth(payload) {
+  const storage = getSessionStorageSafe();
   authState = payload
     ? {
         accessToken: payload.accessToken,
@@ -36,15 +45,16 @@ export function setAuth(payload) {
     : null;
 
   if (authState) {
-    sessionStorage.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
+    storage?.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
   } else {
-    sessionStorage.removeItem(AUTH_STATE_KEY);
+    storage?.removeItem(AUTH_STATE_KEY);
   }
 }
 
 export function clearAuth() {
+  const storage = getSessionStorageSafe();
   authState = null;
-  sessionStorage.removeItem(AUTH_STATE_KEY);
+  storage?.removeItem(AUTH_STATE_KEY);
 }
 
 function authHeader() {

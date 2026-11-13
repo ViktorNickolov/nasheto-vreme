@@ -616,13 +616,18 @@ export default function App() {
         <section className="card">
           <h3>Качи снимка</h3>
           <form className="row" id="uploadForm" onSubmit={submitUpload}>
-            <input
-              name="file"
-              type="file"
-              accept="image/*"
-              onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
-              required
-            />
+            <div className="file-picker">
+              <input
+                id="uploadFileInput"
+                className="file-input-hidden"
+                name="file"
+                type="file"
+                accept="image/*"
+                onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
+              />
+              <label htmlFor="uploadFileInput" className="file-trigger">Избери снимка</label>
+              <span className="file-name">{uploadFile?.name || "Няма избран файл"}</span>
+            </div>
             <button type="submit">Качи</button>
           </form>
           <div className="small-muted" id="uploadResult">{uploadResult}</div>
@@ -781,9 +786,10 @@ export default function App() {
               <h3>{sidebarHighlight.title}</h3>
               <p className="mood-quote">"{sidebarHighlight.text}"</p>
               <div className="mood-ornaments" aria-hidden="true">
-                <span className="ornament"></span>
-                <span className="ornament ornament-center"></span>
-                <span className="ornament"></span>
+                <div className="polaroid-mini">
+                  <div className="polaroid-image"></div>
+                  <div className="polaroid-line"></div>
+                </div>
               </div>
             </section>
           </aside>
