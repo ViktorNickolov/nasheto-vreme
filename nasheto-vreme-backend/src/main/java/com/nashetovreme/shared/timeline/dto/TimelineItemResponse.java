@@ -8,6 +8,7 @@ public record TimelineItemResponse(
         String title,
         String details,
         String imageUrl,
+        Long authorId,
         String author,
         Instant createdAt
 ) {

@@ -105,6 +105,10 @@ export default function App() {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [activeModule, setActiveModule] = useState(() => getInitialActiveModule());
   const [sidebarHighlight] = useState(() => pickSidebarHighlight());
+  const [selectedTimelineMemberId, setSelectedTimelineMemberId] = useState("all");
+  const [selectedTimelineType, setSelectedTimelineType] = useState("all");
+  const [timelineDateFrom, setTimelineDateFrom] = useState("");
+  const [timelineDateTo, setTimelineDateTo] = useState("");
 
   const [loginForm, setLoginForm] = useState(initialLogin);
   const [registerForm, setRegisterForm] = useState(initialRegister);
@@ -121,6 +125,65 @@ export default function App() {
     }
     return `${profile.firstName} ${profile.lastName} | ${profile.familyName || "Без семейство"}`;
   }, [profile]);
+
+  const ownAnswers = useMemo(() => {
+    if (!profile) {
+      return [];
+    }
+    return answers.filter((answer) => isOwnAnswer(answer, profile));
+  }, [answers, profile]);
+
+  const ownMoments = useMemo(() => {
+    if (!profile) {
+      return [];
+    }
+    return moments.filter((moment) => isOwnMoment(moment, profile));
+  }, [moments, profile]);
+
+  const filteredTimeline = useMemo(() => {
+    let result = timeline;
+
+    if (selectedTimelineMemberId !== "all") {
+      const selectedMember = members.find((member) => Number(member.userId) === Number(selectedTimelineMemberId));
+      if (selectedMember) {
+        result = result.filter((item) => matchesTimelineMember(item, selectedMember));
+      }
+    }
+
+    if (selectedTimelineType !== "all") {
+      result = result.filter((item) => matchesTimelineType(item, selectedTimelineType));
+    }
+
+    result = result.filter((item) => isWithinDateRange(item?.createdAt, timelineDateFrom, timelineDateTo));
+    return result;
+  }, [members, selectedTimelineMemberId, selectedTimelineType, timeline, timelineDateFrom, timelineDateTo]);
+
+  const familyMembersWithLogged = useMemo(() => {
+    const list = Array.isArray(members) ? [...members] : [];
+    if (!profile) {
+      return list;
+    }
+
+    const exists = list.some((member) => {
+      if (member?.userId != null && profile?.id != null) {
+        return Number(member.userId) === Number(profile.id);
+      }
+      return normalizeName(member?.email) === normalizeName(profile?.email);
+    });
+
+    if (!exists) {
+      list.unshift({
+        id: `self-${profile.id || profile.email || "current"}`,
+        userId: profile.id,
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        role: "MEMBER"
+      });
+    }
+
+    return list;
+  }, [members, profile]);
 
   function formatDate(value) {
     if (!value) {
@@ -171,6 +234,10 @@ export default function App() {
     setMomentForm(initialMoment);
     setPdfForm(initialPdf);
     setUploadFile(null);
+    setSelectedTimelineMemberId("all");
+    setSelectedTimelineType("all");
+    setTimelineDateFrom("");
+    setTimelineDateTo("");
   }
 
   useEffect(() => {
@@ -395,27 +462,6 @@ export default function App() {
     }, { authSensitive: true });
   }
 
-  async function onLoadAnswers() {
-    await withBusy(async () => {
-      await loadAnswers();
-      show("Отговорите са обновени.");
-    }, { authSensitive: true });
-  }
-
-  async function onLoadMoments() {
-    await withBusy(async () => {
-      await loadMoments();
-      show("Моментите са обновени.");
-    }, { authSensitive: true });
-  }
-
-  async function onLoadTimeline() {
-    await withBusy(async () => {
-      await loadTimeline();
-      show("Хрониката е обновена.");
-    }, { authSensitive: true });
-  }
-
   async function submitAnswer(event) {
     event.preventDefault();
     await withBusy(async () => {
@@ -431,7 +477,7 @@ export default function App() {
         answerText: answerForm.answerText
       });
 
-      await loadAnswers();
+      await Promise.all([loadAnswers(), loadTimeline()]);
       show(result);
     }, { authSensitive: true });
   }
@@ -458,7 +504,7 @@ export default function App() {
 
       setMomentForm(initialMoment);
       setUploadFile(null);
-      await loadMoments();
+      await Promise.all([loadMoments(), loadTimeline()]);
       show(result);
     }, { authSensitive: true });
   }
@@ -551,7 +597,7 @@ export default function App() {
             <InfoItem label="Създадено на" value={formatDate(family?.createdAt)} />
           </div>
           <div className="list" id="membersList">
-            {members.length === 0 ? <p className="small-muted">Все още няма данни.</p> : members.map((member) => (
+            {familyMembersWithLogged.length === 0 ? <p className="small-muted">Все още няма данни.</p> : familyMembersWithLogged.map((member) => (
               <article className="list-item" key={member.id || `${member.email}-${member.role}`}>
                 <h4>{member.firstName} {member.lastName}</h4>
                 <div className="list-meta">{member.role} | {member.email}</div>
@@ -576,15 +622,14 @@ export default function App() {
             <button type="submit">Изпрати отговор</button>
           </form>
           <div className="cardhead compact">
-            <h3>Семейни отговори</h3>
-            <button id="loadAnswersBtn" type="button" onClick={onLoadAnswers}>Зареди</button>
+            <h3>Моите отговори</h3>
           </div>
           <div className="list" id="answersList">
-            {answers.length === 0 ? <p className="small-muted">Все още няма данни.</p> : answers.map((answer) => (
+            {ownAnswers.length === 0 ? <p className="small-muted">Все още нямате отговори.</p> : ownAnswers.map((answer) => (
               <article className="list-item" key={answer.id || `${answer.authorName}-${answer.createdAt}`}>
                 <h4>{answer.questionTitle}</h4>
                 <p>{answer.answerText}</p>
-                <div className="list-meta">от {answer.authorName} | {formatDate(answer.createdAt)}</div>
+                <div className="list-meta">{answer.authorName || "Семейство"} | {formatDate(answer.createdAt)}</div>
               </article>
             ))}
           </div>
@@ -597,7 +642,6 @@ export default function App() {
         <section className="card">
           <div className="cardhead">
             <h3>Семейни моменти</h3>
-            <button id="listMomentsBtn" type="button" onClick={onLoadMoments}>Зареди</button>
           </div>
           <form className="grid2" id="createMomentForm" onSubmit={submitMoment}>
             <input name="title" type="text" placeholder="Заглавие" value={momentForm.title} onChange={updateForm(setMomentForm)} required />
@@ -617,12 +661,12 @@ export default function App() {
           </form>
           <span id="uploadResult" className="hidden" aria-hidden="true"></span>
           <div className="list" id="momentsList">
-            {moments.length === 0 ? <p className="small-muted">Все още няма данни.</p> : moments.map((moment) => (
+            {ownMoments.length === 0 ? <p className="small-muted">Все още нямате добавени моменти.</p> : ownMoments.map((moment) => (
               <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
                 <h4>{moment.title}</h4>
                 {moment.imageUrl ? <AttachmentPreview filePath={moment.imageUrl} /> : null}
                 <p>{moment.description || "Няма описание"}</p>
-                <div className="list-meta">{formatDate(moment.createdAt)}</div>
+                <div className="list-meta">{moment.authorName || "Семейство"} | {formatDate(moment.createdAt)}</div>
               </article>
             ))}
           </div>
@@ -635,10 +679,75 @@ export default function App() {
         <section className="card">
           <div className="cardhead">
             <h3>Семейна хроника</h3>
-            <button id="loadTimelineBtn" type="button" onClick={onLoadTimeline}>Зареди</button>
+          </div>
+          <div className="timeline-filters" id="timelineFilters">
+            <button
+              className={selectedTimelineType === "all" ? "timeline-filter-chip active" : "timeline-filter-chip"}
+              type="button"
+              onClick={() => setSelectedTimelineType("all")}
+            >
+              Всички типове
+            </button>
+            <button
+              className={selectedTimelineType === "question" ? "timeline-filter-chip active" : "timeline-filter-chip"}
+              type="button"
+              onClick={() => setSelectedTimelineType("question")}
+            >
+              Въпроси
+            </button>
+            <button
+              className={selectedTimelineType === "moment" ? "timeline-filter-chip active" : "timeline-filter-chip"}
+              type="button"
+              onClick={() => setSelectedTimelineType("moment")}
+            >
+              Моменти
+            </button>
+          </div>
+          <div className="timeline-filters timeline-date-filters">
+            <label className="timeline-date-input">
+              От
+              <input type="date" value={timelineDateFrom} onChange={(event) => setTimelineDateFrom(event.target.value)} />
+            </label>
+            <label className="timeline-date-input">
+              До
+              <input type="date" value={timelineDateTo} onChange={(event) => setTimelineDateTo(event.target.value)} />
+            </label>
+            <button
+              className="timeline-filter-chip"
+              type="button"
+              onClick={() => {
+                setTimelineDateFrom("");
+                setTimelineDateTo("");
+              }}
+            >
+              Изчисти дати
+            </button>
+          </div>
+          <div className="timeline-filters">
+            <button
+              className={selectedTimelineMemberId === "all" ? "timeline-filter-chip active" : "timeline-filter-chip"}
+              type="button"
+              onClick={() => setSelectedTimelineMemberId("all")}
+            >
+              Всички
+            </button>
+            {members.map((member) => {
+              const memberId = String(member.userId);
+              const isActive = selectedTimelineMemberId === memberId;
+              return (
+                <button
+                  key={member.id || memberId}
+                  className={isActive ? "timeline-filter-chip active" : "timeline-filter-chip"}
+                  type="button"
+                  onClick={() => setSelectedTimelineMemberId(memberId)}
+                >
+                  {resolveMemberName(member)}
+                </button>
+              );
+            })}
           </div>
           <div className="list" id="timelineList">
-            {timeline.length === 0 ? <p className="small-muted">Все още няма данни.</p> : timeline.map((item) => (
+            {filteredTimeline.length === 0 ? <p className="small-muted">Няма записи за избрания член.</p> : filteredTimeline.map((item) => (
               <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
                 <h4>{item.type} | {item.title}</h4>
                 {item.imageUrl ? <AttachmentPreview filePath={item.imageUrl} /> : null}
@@ -913,6 +1022,87 @@ function AttachmentPreview({ filePath }) {
   }
 
   return null;
+}
+
+function matchesTimelineMember(item, member) {
+  if (!item || !member) {
+    return false;
+  }
+
+  if (item.authorId != null && member.userId != null) {
+    return Number(item.authorId) === Number(member.userId);
+  }
+
+  return normalizeName(item.author) === normalizeName(resolveMemberName(member));
+}
+
+function isOwnAnswer(answer, profile) {
+  if (!answer || !profile) {
+    return false;
+  }
+
+  if (answer.authorId != null && profile.id != null) {
+    return Number(answer.authorId) === Number(profile.id);
+  }
+
+  return normalizeName(answer.authorName) === normalizeName(`${profile.firstName || ""} ${profile.lastName || ""}`);
+}
+
+function isOwnMoment(moment, profile) {
+  if (!moment || !profile) {
+    return false;
+  }
+
+  if (moment.authorId != null && profile.id != null) {
+    return Number(moment.authorId) === Number(profile.id);
+  }
+
+  return normalizeName(moment.authorName) === normalizeName(`${profile.firstName || ""} ${profile.lastName || ""}`);
+}
+
+function matchesTimelineType(item, type) {
+  if (type === "question") {
+    return item?.type === "ANSWER";
+  }
+  if (type === "moment") {
+    return item?.type === "MOMENT";
+  }
+  return true;
+}
+
+function isWithinDateRange(value, fromDate, toDate) {
+  if (!value) {
+    return false;
+  }
+
+  const itemDate = new Date(value);
+  if (Number.isNaN(itemDate.getTime())) {
+    return false;
+  }
+
+  if (fromDate) {
+    const start = new Date(`${fromDate}T00:00:00`);
+    if (itemDate < start) {
+      return false;
+    }
+  }
+
+  if (toDate) {
+    const end = new Date(`${toDate}T23:59:59.999`);
+    if (itemDate > end) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function resolveMemberName(member) {
+  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || "Член";
+}
+
+function normalizeName(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 

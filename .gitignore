@@ -7,3 +7,9 @@ tmp_zip/
 nasheto-vreme-backend/target/
 nasheto-vreme-frontend/node_modules/
 nasheto-vreme-frontend/dist/
+nasheto-vreme-mobile/node_modules/
+nasheto-vreme-mobile/.expo/
+nasheto-vreme-mobile/android/.gradle/
+nasheto-vreme-mobile/android/build/
+nasheto-vreme-mobile/android/app/build/
+nasheto-vreme-mobile/android/local.properties

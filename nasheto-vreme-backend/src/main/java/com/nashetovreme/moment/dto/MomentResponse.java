@@ -5,6 +5,8 @@ import java.time.Instant;
 public record MomentResponse(
         Long id,
         Long familyId,
+        Long authorId,
+        String authorName,
         String title,
         String description,
         String imageUrl,

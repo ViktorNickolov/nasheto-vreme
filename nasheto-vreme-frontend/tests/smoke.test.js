@@ -25,7 +25,7 @@ assert(appJsx.includes("id=\"createMomentForm\""), "moments form is missing");
 assert(appJsx.includes("id=\"uploadForm\""), "upload form is missing");
 assert(appJsx.includes("id=\"pdfExportForm\""), "pdf export form is missing");
 assert(appJsx.includes("id=\"downloadPdfBtn\""), "pdf download action is missing");
-assert(appJsx.includes("id=\"loadTimelineBtn\""), "timeline action is missing");
+assert(appJsx.includes("id=\"timelineFilters\""), "timeline filters are missing");
 
 assert(appJsx.includes("createPdfPreview"), "pdf preview API action is missing");
 assert(appJsx.includes("downloadPdfBook"), "pdf download API action is missing");

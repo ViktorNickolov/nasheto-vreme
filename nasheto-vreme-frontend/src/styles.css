@@ -1,14 +1,14 @@
 :root {
-  --cream: #f3eee5;
-  --paper: #fffcf7;
-  --sage: #dce4d5;
-  --sage-dark: #71836b;
-  --accent: #c67f5f;
-  --accent-soft: #f4d9cc;
-  --ink: #4f473f;
-  --muted: #968a7c;
-  --line: #e7ded2;
-  --shadow: 0 14px 38px rgba(79, 71, 63, 0.1);
+  --cream: #f4e9d9;
+  --paper: #fff8ef;
+  --sage: #e7d3b9;
+  --sage-dark: #9b623f;
+  --accent: #b56e45;
+  --accent-soft: #f6deca;
+  --ink: #4f3c31;
+  --muted: #8f7564;
+  --line: #e8d5bf;
+  --shadow: 0 14px 34px rgba(83, 57, 39, 0.14);
 }
 
 * { box-sizing: border-box; }
@@ -16,9 +16,9 @@
 body {
   margin: 0;
   font-family: "Segoe UI", "Trebuchet MS", Arial, sans-serif;
-  background: radial-gradient(circle at 12% 10%, #fff9ef 0%, rgba(255, 249, 239, 0) 34%),
-    radial-gradient(circle at 88% 12%, #f7dece 0%, rgba(247, 222, 206, 0) 30%),
-    linear-gradient(165deg, #f8f3ea 0%, #efe6d8 100%);
+  background: radial-gradient(circle at 14% 8%, #fff3e1 0%, rgba(255, 243, 225, 0) 36%),
+    radial-gradient(circle at 86% 14%, #f4d7be 0%, rgba(244, 215, 190, 0) 34%),
+    linear-gradient(165deg, #f8eee1 0%, #eedfcf 100%);
   color: var(--ink);
 }
 
@@ -86,7 +86,7 @@ input[type="checkbox"] {
 }
 
 button {
-  background: linear-gradient(135deg, var(--sage-dark), #5f715a);
+  background: linear-gradient(135deg, #be774c, #9f5f3b);
   color: #fff;
   border: 0;
   cursor: pointer;
@@ -96,8 +96,8 @@ button {
 }
 
 button.secondary {
-  background: linear-gradient(135deg, #d9cbb9, #cdbca7);
-  color: #65594e;
+  background: linear-gradient(135deg, #ecd8c0, #dec7ad);
+  color: #5f4b3d;
 }
 
 button:hover {
@@ -208,7 +208,7 @@ button:hover {
   margin: 0 auto;
   padding: 20px;
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: 16px;
   animation: pageIn 280ms ease;
 }
@@ -230,14 +230,14 @@ button:hover {
   position: sticky;
   top: 20px;
   height: fit-content;
-  background: linear-gradient(175deg, #fffdf9 0%, #f8f1e7 100%);
+  background: linear-gradient(175deg, #fff8ee 0%, #f6e6d2 100%);
 }
 
 .sidebar::after {
   content: "";
   border-radius: 16px;
-  border: 1px dashed #dbcdbf;
-  background: linear-gradient(165deg, rgba(214, 154, 125, 0.12) 0%, rgba(125, 157, 116, 0.1) 100%);
+  border: 1px dashed #d3b190;
+  background: linear-gradient(165deg, rgba(201, 136, 96, 0.18) 0%, rgba(165, 109, 74, 0.08) 100%);
   min-height: 120px;
 }
 
@@ -325,15 +325,15 @@ button:hover {
   text-align: left;
   height: 38px;
   border-radius: 11px;
-  background: linear-gradient(145deg, #eee4d7, #e6d7c6);
-  color: #5a4c40;
+  background: linear-gradient(145deg, #f1e0cb, #e9cfb4);
+  color: #654d3f;
   box-shadow: none;
 }
 
 .module-tab.active {
-  background: linear-gradient(135deg, #748a6f, #5f725a);
+  background: linear-gradient(135deg, #c67f56, #a56745);
   color: #fff;
-  box-shadow: 0 8px 14px rgba(95, 114, 90, 0.22);
+  box-shadow: 0 8px 14px rgba(156, 96, 63, 0.28);
 }
 
 .mood-card {
@@ -414,7 +414,7 @@ button:hover {
 .main-content {
   padding: 22px;
   min-width: 0;
-  background: linear-gradient(180deg, #fffdf9 0%, #fbf6ef 100%);
+  background: linear-gradient(180deg, #fffaf2 0%, #f8ebda 100%);
 }
 
 .topbar {
@@ -432,21 +432,34 @@ button:hover {
 }
 
 .card {
-  background: var(--paper);
-  border: 1px solid var(--line);
+  background: #fffaf3;
+  border: 1px solid #e8d6c1;
   border-radius: 20px;
   padding: 16px;
   margin-bottom: 14px;
   transition: transform 0.14s ease, box-shadow 0.14s ease;
+  position: relative;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  width: 64px;
+  height: 16px;
+  border-radius: 4px;
+  background: rgba(220, 190, 164, 0.65);
+  transform: rotate(2deg);
 }
 
 .card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(78, 63, 47, 0.12);
+  box-shadow: 0 16px 34px rgba(86, 62, 43, 0.15);
 }
 
 .card.soft {
-  background: linear-gradient(160deg, #f6f1e8 0%, #f9f5ee 100%);
+  background: linear-gradient(160deg, #faefe3 0%, #fdf6ea 100%);
 }
 
 .cardhead {
@@ -491,8 +504,8 @@ button:hover {
 }
 
 .info-item {
-  background: #fbf7f1;
-  border: 1px solid var(--line);
+  background: #fff5e8;
+  border: 1px solid #ead8c2;
   border-radius: 12px;
   padding: 10px;
 }
@@ -512,8 +525,8 @@ button:hover {
 }
 
 .list-item {
-  background: #fff;
-  border: 1px solid var(--line);
+  background: #fffdf8;
+  border: 1px solid #e9dac9;
   border-radius: 12px;
   padding: 10px;
 }
@@ -526,6 +539,50 @@ button:hover {
 .list-meta {
   color: var(--muted);
   font-size: 12px;
+}
+
+.timeline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.timeline-date-filters {
+  align-items: center;
+}
+
+.timeline-date-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  background: #f9f3ea;
+}
+
+.timeline-date-input input {
+  height: 30px;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.timeline-filter-chip {
+  height: 32px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid #dbc8b3;
+  background: linear-gradient(145deg, #f6ebde, #efdecb);
+  color: #6a5647;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.timeline-filter-chip.active {
+  background: linear-gradient(135deg, #c67f56, #a56745);
+  border-color: #a56745;
+  color: #fff;
+  box-shadow: 0 8px 14px rgba(156, 96, 63, 0.2);
 }
 
 .timeline-file-actions {
@@ -679,8 +736,8 @@ button:hover {
 }
 
 .question-box {
-  background: linear-gradient(140deg, #eaf0e2 0%, #f4f8ef 100%);
-  border: 1px solid #d8dfcf;
+  background: linear-gradient(140deg, #fff1df 0%, #fbe7d1 100%);
+  border: 1px solid #ebcfb0;
   border-radius: 14px;
   padding: 12px;
   margin: 0 0 10px;
@@ -781,9 +838,9 @@ button:hover {
   height: 38px;
   padding: 0 14px;
   border-radius: 11px;
-  border: 1px solid #d8ccbe;
-  background: linear-gradient(135deg, #efe5d9, #e5d6c6);
-  color: #66584b;
+  border: 1px solid #d7bea4;
+  background: linear-gradient(135deg, #f1dcc3, #e6c8aa);
+  color: #664f40;
   font-weight: 600;
   cursor: pointer;
   transition: filter 0.12s ease, transform 0.12s ease;

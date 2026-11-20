@@ -21,6 +21,9 @@ public class Moment extends BaseEntity {
     @JoinColumn(name = "family_id", nullable = false)
     private Family family;
 
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId;
+
     @Column(nullable = false, length = 255)
     private String title;
 

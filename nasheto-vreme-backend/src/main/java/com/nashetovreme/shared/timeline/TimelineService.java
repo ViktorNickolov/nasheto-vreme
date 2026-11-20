@@ -7,9 +7,13 @@ import com.nashetovreme.question.QuestionAnswerRepository;
 import com.nashetovreme.security.AuthenticatedUser;
 import com.nashetovreme.shared.audit.AuditEventLogger;
 import com.nashetovreme.shared.timeline.dto.TimelineItemResponse;
+import com.nashetovreme.user.User;
+import com.nashetovreme.user.UserRepository;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,7 @@ public class TimelineService {
     private final MomentRepository momentRepository;
     private final QuestionAnswerRepository questionAnswerRepository;
     private final AuditEventLogger auditEventLogger;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<TimelineItemResponse> getTimeline(Long familyId,
@@ -40,13 +45,21 @@ public class TimelineService {
 
         if (!"ANSWER".equalsIgnoreCase(type)) {
             List<Moment> moments = momentRepository.findByFamilyIdOrderByCreatedAtDesc(resolvedFamilyId);
+            Map<Long, User> usersById = userRepository.findAllById(moments.stream()
+                            .map(Moment::getCreatedByUserId)
+                            .filter(id -> id != null)
+                            .distinct()
+                            .toList())
+                    .stream()
+                    .collect(java.util.stream.Collectors.toMap(User::getId, Function.identity()));
             moments.forEach(moment -> items.add(new TimelineItemResponse(
                     "MOMENT",
                     moment.getId(),
                     moment.getTitle(),
                     moment.getDescription(),
                     moment.getImageUrl(),
-                    null,
+                    moment.getCreatedByUserId(),
+                    resolveAuthorName(usersById.get(moment.getCreatedByUserId())),
                     moment.getCreatedAt()
             )));
         }
@@ -59,6 +72,7 @@ public class TimelineService {
                     answer.getQuestion().getTitle(),
                     answer.getAnswerText(),
                     null,
+                    answer.getAuthor().getId(),
                     answer.getAuthor().getFirstName() + " " + answer.getAuthor().getLastName(),
                     answer.getCreatedAt()
             )));
@@ -80,6 +94,13 @@ public class TimelineService {
             );
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this family");
         }
+    }
+
+    private static String resolveAuthorName(User user) {
+        if (user == null) {
+            return null;
+        }
+        return (user.getFirstName() + " " + user.getLastName()).trim();
     }
 }
 

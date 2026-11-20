@@ -5,7 +5,11 @@ import com.nashetovreme.family.FamilyRepository;
 import com.nashetovreme.moment.dto.CreateMomentRequest;
 import com.nashetovreme.moment.dto.MomentResponse;
 import com.nashetovreme.security.AuthenticatedUser;
+import com.nashetovreme.user.User;
+import com.nashetovreme.user.UserRepository;
+import java.util.Map;
 import java.util.List;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,7 @@ public class MomentService {
 
     private final MomentRepository momentRepository;
     private final FamilyRepository familyRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public MomentResponse createMoment(CreateMomentRequest request, AuthenticatedUser principal) {
@@ -31,8 +36,10 @@ public class MomentService {
         moment.setTitle(request.title().trim());
         moment.setDescription(trimToNull(request.description()));
         moment.setImageUrl(trimToNull(request.imageUrl()));
+        moment.setCreatedByUserId(principal.getId());
 
-        return toResponse(momentRepository.save(moment));
+        User author = userRepository.findById(principal.getId()).orElse(null);
+        return toResponse(momentRepository.save(moment), author);
     }
 
     @Transactional(readOnly = true)
@@ -43,8 +50,18 @@ public class MomentService {
         }
 
         verifyFamilyAccess(resolvedFamilyId, principal);
-        return momentRepository.findByFamilyIdOrderByCreatedAtDesc(resolvedFamilyId).stream()
-                .map(this::toResponse)
+        List<Moment> moments = momentRepository.findByFamilyIdOrderByCreatedAtDesc(resolvedFamilyId);
+        Map<Long, User> usersById = userRepository.findAllById(
+                        moments.stream()
+                                .map(Moment::getCreatedByUserId)
+                                .filter(id -> id != null)
+                                .distinct()
+                                .toList())
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, Function.identity()));
+
+        return moments.stream()
+                .map(moment -> toResponse(moment, usersById.get(moment.getCreatedByUserId())))
                 .toList();
     }
 
@@ -53,7 +70,11 @@ public class MomentService {
         Moment moment = momentRepository.findById(momentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Moment not found"));
         verifyFamilyAccess(moment.getFamily().getId(), principal);
-        return toResponse(moment);
+        User author = null;
+        if (moment.getCreatedByUserId() != null) {
+            author = userRepository.findById(moment.getCreatedByUserId()).orElse(null);
+        }
+        return toResponse(moment, author);
     }
 
     private void verifyFamilyAccess(Long requestedFamilyId, AuthenticatedUser principal) {
@@ -62,10 +83,13 @@ public class MomentService {
         }
     }
 
-    private MomentResponse toResponse(Moment moment) {
+    private MomentResponse toResponse(Moment moment, User author) {
+        String authorName = author == null ? null : (author.getFirstName() + " " + author.getLastName()).trim();
         return new MomentResponse(
                 moment.getId(),
                 moment.getFamily().getId(),
+                moment.getCreatedByUserId(),
+                authorName,
                 moment.getTitle(),
                 moment.getDescription(),
                 moment.getImageUrl(),

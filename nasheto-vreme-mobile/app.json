@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Nasheto Vreme",
+    "slug": "nasheto-vreme-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nasheto.vreme"
+    },
+    "android": {
+      "package": "com.nasheto.vreme"
+    },
+    "extra": {
+      "apiBaseUrl": "http://10.0.2.2:8088/api/v1"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}
