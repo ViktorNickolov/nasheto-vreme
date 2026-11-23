@@ -10,10 +10,12 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nasheto.vreme"
+      "bundleIdentifier": "com.nasheto.vreme",
+      "newArchEnabled": true
     },
     "android": {
-      "package": "com.nasheto.vreme"
+      "package": "com.nasheto.vreme",
+      "newArchEnabled": true
     },
     "extra": {
       "apiBaseUrl": "http://10.0.2.2:8088/api/v1"
