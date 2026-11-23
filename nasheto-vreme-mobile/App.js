@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -7,6 +7,7 @@ import RegisterScreen from "./src/screens/RegisterScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import ModuleScreen from "./src/screens/ModuleScreen";
 import { LanguageProvider } from "./src/config/language";
+import { setMobileApiLanguage } from "./src/api/http";
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +27,10 @@ function screenTitle(bgText, enText, appLanguage) {
 export default function App() {
   const [appLanguage, setAppLanguage] = useState(() => detectAppLanguage());
   const languageToggleLabel = appLanguage === "bg" ? "EN" : "БГ";
+  useEffect(() => {
+    setMobileApiLanguage(appLanguage);
+  }, [appLanguage]);
+
   const commonScreenOptions = useMemo(() => ({
     // Keep room for header actions (e.g. language toggle) on narrow devices.
     headerTitleAlign: "left",

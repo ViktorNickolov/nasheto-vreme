@@ -1,3 +1,5 @@
+import { getApiErrorMessage } from "./i18n/apiErrorMessages.js";
+
 const API_URL_KEY = "nv_api_base";
 const API_TIMEOUT_MS = 10000;
 const AUTH_STATE_KEY = "nv_auth_state";
@@ -5,6 +7,11 @@ const AUTH_RETRY_EXCLUDED_PATHS = ["/auth/login", "/auth/register", "/auth/refre
 
 let authState = null;
 let refreshInFlight = null;
+let apiLanguage = "en";
+
+export function setApiLanguage(language) {
+  apiLanguage = language === "en" ? "en" : "bg";
+}
 
 function getSessionStorageSafe() {
   if (typeof globalThis === "undefined" || !globalThis.sessionStorage) {
@@ -122,7 +129,7 @@ async function fetchWithTimeout(url, options = {}) {
     });
   } catch (error) {
     if (error.name === "AbortError") {
-      throw new Error("Request timed out. Please try again.");
+      throw new Error(getApiErrorMessage("requestTimeout", apiLanguage));
     }
     throw error;
   } finally {
@@ -139,7 +146,7 @@ async function parseJsonBody(response) {
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error("Server returned invalid JSON response.");
+    throw new Error(getApiErrorMessage("invalidJson", apiLanguage));
   }
 }
 
@@ -315,7 +322,7 @@ export async function downloadPdfBook(payload, allowAuthRetry = true) {
 export async function downloadUploadedFile(filePath, allowAuthRetry = true) {
   const fileName = (filePath || "").split(/[\\/]/).pop();
   if (!fileName) {
-    throw new Error("Missing uploaded file reference.");
+    throw new Error(getApiErrorMessage("missingUploadedFileReference", apiLanguage));
   }
 
   const response = await fetchWithTimeout(`${getApiBaseUrl()}/uploads/images/${encodeURIComponent(fileName)}`, {

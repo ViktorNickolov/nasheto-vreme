@@ -21,10 +21,12 @@ import {
   register,
   sendFamilyInvitation,
   setApiBaseUrl,
+  setApiLanguage,
   setAuth,
   uploadImage,
   uploadProfileImage
 } from "./api.js";
+import { localizeTimelineType } from "./i18n/timelineTypeLabels.js";
 
 const initialLogin = { email: "", password: "" };
 const initialRegister = { email: "", password: "", firstName: "", lastName: "", familyName: "", inviteToken: "" };
@@ -97,6 +99,7 @@ const webText = {
     profilePhotoUpdated: "Профилната снимка е обновена.",
     profileHint: "Вашето лично пространство и семейна принадлежност.",
     noProfilePhoto: "Няма профилна снимка.",
+    profilePhotoAlt: "Профилна снимка",
     pickProfilePhoto: "Избери профилна снимка",
     upload: "Качи",
     user: "Потребител",
@@ -157,6 +160,7 @@ const webText = {
     familyName: "Име на семейство",
     createProfile: "Създай профил",
     loading: "Зареждане...",
+    email: "Имейл",
     appName: "Нашето време",
     logout: "Изход",
     welcome: "Добре дошли",
@@ -164,7 +168,9 @@ const webText = {
     previewAlt: "Преглед",
     filePreviewTitle: "Преглед на файл",
     memberFallback: "Семейство",
-    unknown: "UNKNOWN",
+    unknown: "НЕИЗВЕСТНО",
+    unknownStatus: "Неизвестен",
+    sessionRestored: "Сесията е възстановена.",
     emailNotSentPrefix: "Имейлът не е изпратен"
   },
   en: {
@@ -184,6 +190,7 @@ const webText = {
     profilePhotoUpdated: "Profile photo updated.",
     profileHint: "Your personal space and family context.",
     noProfilePhoto: "No profile photo.",
+    profilePhotoAlt: "Profile photo",
     pickProfilePhoto: "Choose profile photo",
     upload: "Upload",
     user: "User",
@@ -244,6 +251,7 @@ const webText = {
     familyName: "Family name",
     createProfile: "Create profile",
     loading: "Loading...",
+    email: "Email",
     appName: "Our Time",
     logout: "Logout",
     welcome: "Welcome",
@@ -252,6 +260,8 @@ const webText = {
     filePreviewTitle: "File preview",
     memberFallback: "Family",
     unknown: "UNKNOWN",
+    unknownStatus: "Unknown",
+    sessionRestored: "Session restored.",
     emailNotSentPrefix: "Email was not sent"
   }
 };
@@ -477,6 +487,10 @@ export default function App() {
   }
 
   useEffect(() => {
+    setApiLanguage(questionLanguage);
+  }, [questionLanguage]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function bootstrapSession() {
@@ -522,7 +536,7 @@ export default function App() {
         setAuth(refreshed);
         setAuthState(refreshed);
         await refreshDashboardData();
-        setAuthInfo("Session restored.");
+        setAuthInfo(ui.sessionRestored);
       } catch {
         if (!cancelled) {
           clearAuth();
@@ -721,7 +735,8 @@ export default function App() {
       if (response?.deliveryStatus === "SENT") {
         setAuthInfo(ui.inviteSent);
       } else {
-        setAuthInfo(`${ui.emailNotSentPrefix} (${response?.deliveryStatus || ui.unknown}). ${response?.inviteLink || "-"}`);
+        const statusLabel = localizeInviteStatus(response?.deliveryStatus, questionLanguage, ui);
+        setAuthInfo(`${ui.emailNotSentPrefix} (${statusLabel}). ${response?.inviteLink || "-"}`);
       }
     }, { authSensitive: true });
   }
@@ -883,10 +898,10 @@ export default function App() {
     if (activeModule === "profile") {
       return (
         <section className="card">
-          <h3>{moduleLabelsByKey.profile || "Моят профил"}</h3>
+          <h3>{moduleLabelsByKey.profile}</h3>
           <p className="small-muted module-note">{ui.profileHint}</p>
           {profile?.profileImageUrl ? (
-            <ProfileImagePreview filePath={profile.profileImageUrl} />
+            <ProfileImagePreview filePath={profile.profileImageUrl} language={questionLanguage} />
           ) : (
             <p className="small-muted">{ui.noProfilePhoto}</p>
           )}
@@ -904,7 +919,7 @@ export default function App() {
           </div>
           <div className="info-grid" id="profileCard">
             <InfoItem label={ui.user} value={profile ? `${profile.firstName} ${profile.lastName}` : "-"} />
-            <InfoItem label="Email" value={profile?.email || "-"} />
+            <InfoItem label={ui.email} value={profile?.email || "-"} />
             <InfoItem label={ui.family} value={profile?.familyName || family?.name || "-"} />
             <InfoItem label={ui.status} value={auth?.accessToken ? ui.activeSession : ui.inactiveSession} />
           </div>
@@ -916,7 +931,7 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>{moduleLabelsByKey.family || "Вашето семейство"}</h3>
+            <h3>{moduleLabelsByKey.family}</h3>
           </div>
           <div className="info-grid" id="familyCard">
             <InfoItem label={ui.family} value={family?.name || "-"} />
@@ -927,7 +942,7 @@ export default function App() {
             {familyMembersWithLogged.length === 0 ? <p className="small-muted">{ui.noDataYet}</p> : familyMembersWithLogged.map((member) => (
               <article className="list-item" key={member.id || `${member.email}-${member.role}`}>
                 <h4>{member.firstName} {member.lastName}</h4>
-                <div className="list-meta">{member.role} | {member.email}</div>
+                <div className="list-meta">{localizeRole(member.role, questionLanguage)} | {member.email}</div>
               </article>
             ))}
           </div>
@@ -961,7 +976,7 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>{moduleLabelsByKey.question || "Въпрос на деня"}</h3>
+            <h3>{moduleLabelsByKey.question}</h3>
           </div>
           <p className="question-box" id="todayQuestionText">
             {todayQuestion ? todayQuestion.title : ui.questionLoading}
@@ -990,7 +1005,7 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>{moduleLabelsByKey.moments || "Семейни моменти"}</h3>
+            <h3>{moduleLabelsByKey.moments}</h3>
           </div>
           <form className="grid2" id="createMomentForm" onSubmit={submitMoment}>
             <input name="title" type="text" placeholder={ui.titlePlaceholder} value={momentForm.title} onChange={updateForm(setMomentForm)} required />
@@ -1027,7 +1042,7 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>{moduleLabelsByKey.timeline || "Семейна хроника"}</h3>
+            <h3>{moduleLabelsByKey.timeline}</h3>
           </div>
           <div className="timeline-filters" id="timelineFilters">
             <button
@@ -1090,7 +1105,7 @@ export default function App() {
                   type="button"
                   onClick={() => setSelectedTimelineMemberId(memberId)}
                 >
-                  {resolveMemberName(member)}
+                  {resolveMemberName(member, questionLanguage)}
                 </button>
               );
             })}
@@ -1098,7 +1113,7 @@ export default function App() {
           <div className="list" id="timelineList">
             {filteredTimeline.length === 0 ? <p className="small-muted">{ui.noTimelineForMember}</p> : filteredTimeline.map((item) => (
               <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
-                <h4>{item.type} | {item.title}</h4>
+                <h4>{localizeTimelineType(item.type, questionLanguage)} | {item.title}</h4>
                 {item.imageUrl ? <AttachmentPreview filePath={item.imageUrl} language={questionLanguage} /> : null}
                 <p>{item.details || ui.noDetails}</p>
                 <div className="list-meta">{item.author || ui.memberFallback} | {formatDate(item.createdAt)}</div>
@@ -1111,7 +1126,7 @@ export default function App() {
 
     return (
       <section className="card">
-        <h3>{`${moduleLabelsByKey.pdf || "Семейна PDF книга"}${questionLanguage === "en" ? " (preview)" : " (преглед)"}`}</h3>
+        <h3>{`${moduleLabelsByKey.pdf} (${ui.preview.toLowerCase()})`}</h3>
         <form className="grid2" id="pdfExportForm" onSubmit={submitPdfPreview}>
           <label className="select-filter">
             {ui.period}
@@ -1144,16 +1159,16 @@ export default function App() {
         )}
         {pdfPreviewUrl ? (
           <div className="info-grid" id="pdfPreviewCard">
-            <InfoItem label={ui.status} value={pdfPreview?.status || "-"} />
-            <InfoItem label={ui.period} value={pdfPreview?.period || "-"} />
-            <InfoItem label={ui.style} value={pdfPreview?.style || "-"} />
+            <InfoItem label={ui.status} value={localizePdfStatus(pdfPreview?.status, questionLanguage, ui)} />
+            <InfoItem label={ui.period} value={localizePdfPeriod(pdfPreview?.period, questionLanguage)} />
+            <InfoItem label={ui.style} value={localizePdfStyle(pdfPreview?.style, questionLanguage)} />
             <InfoItem label={ui.moments} value={pdfPreview?.includedMoments ?? "-"} />
             <InfoItem label={ui.myAnswers} value={pdfPreview?.includedAnswers ?? "-"} />
           </div>
         ) : null}
         {pdfPreviewUrl ? (
           <iframe
-            title="PDF Preview"
+            title={ui.filePreviewTitle}
             src={pdfPreviewUrl}
             style={{ width: "100%", minHeight: 420, border: "1px solid #e7ded2", borderRadius: 12, marginTop: 10 }}
           />
@@ -1203,13 +1218,13 @@ export default function App() {
 
             {tab === "login" ? (
               <form className="auth-form" id="loginForm" onSubmit={submitLogin}>
-                <input name="email" type="email" placeholder="Email" value={loginForm.email} onChange={updateForm(setLoginForm)} required />
+                <input name="email" type="email" placeholder={ui.email} value={loginForm.email} onChange={updateForm(setLoginForm)} required />
                 <input name="password" type="password" placeholder={ui.password} value={loginForm.password} onChange={updateForm(setLoginForm)} required />
                 <button disabled={busy} type="submit">{busy ? ui.loading : ui.loginTab}</button>
               </form>
             ) : (
               <form className="auth-form" id="registerForm" onSubmit={submitRegister}>
-                <input name="email" type="email" placeholder="Email" value={registerForm.email} onChange={updateForm(setRegisterForm)} required />
+                <input name="email" type="email" placeholder={ui.email} value={registerForm.email} onChange={updateForm(setRegisterForm)} required />
                 <input name="password" type="password" placeholder={ui.password} value={registerForm.password} onChange={updateForm(setRegisterForm)} required />
                 <input name="firstName" type="text" placeholder={ui.firstName} value={registerForm.firstName} onChange={updateForm(setRegisterForm)} required />
                 <input name="lastName" type="text" placeholder={ui.lastName} value={registerForm.lastName} onChange={updateForm(setRegisterForm)} required />
@@ -1409,7 +1424,7 @@ function AttachmentPreview({ filePath, language = "bg" }) {
   return null;
 }
 
-function ProfileImagePreview({ filePath }) {
+function ProfileImagePreview({ filePath, language = "bg" }) {
   const [imageSrc, setImageSrc] = useState("");
 
   useEffect(() => {
@@ -1450,7 +1465,7 @@ function ProfileImagePreview({ filePath }) {
     return null;
   }
 
-  return <img className="profile-image-preview" src={imageSrc} alt="Профилна снимка" />;
+  return <img className="profile-image-preview" src={imageSrc} alt={language === "en" ? "Profile photo" : "Профилна снимка"} />;
 }
 
 function matchesTimelineMember(item, member) {
@@ -1499,6 +1514,7 @@ function matchesTimelineType(item, type) {
   return true;
 }
 
+
 function isWithinDateRange(value, fromDate, toDate) {
   if (!value) {
     return false;
@@ -1526,8 +1542,79 @@ function isWithinDateRange(value, fromDate, toDate) {
   return true;
 }
 
-function resolveMemberName(member) {
-  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || "Member";
+function resolveMemberName(member, language = "bg") {
+  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || (language === "en" ? "Member" : "Член");
+}
+
+function localizeRole(role, language = "bg") {
+  if (role === "PARENT") {
+    return language === "en" ? "Parent" : "Родител";
+  }
+  if (role === "CHILD") {
+    return language === "en" ? "Child" : "Дете";
+  }
+  if (role === "MEMBER") {
+    return language === "en" ? "Member" : "Член";
+  }
+  return role || "-";
+}
+
+function localizeInviteStatus(status, language = "bg", ui = {}) {
+  if (status === "SENT") {
+    return language === "en" ? "Sent" : "Изпратен";
+  }
+  if (status === "FAILED") {
+    return language === "en" ? "Failed" : "Неуспешен";
+  }
+  return status || ui.unknownStatus || ui.unknown || "-";
+}
+
+function localizePdfStatus(status, language = "bg", ui = {}) {
+  if (!status) {
+    return "-";
+  }
+  if (status === "READY") {
+    return language === "en" ? "Ready" : "Готов";
+  }
+  if (status === "PROCESSING") {
+    return language === "en" ? "Processing" : "Обработва се";
+  }
+  if (status === "FAILED") {
+    return language === "en" ? "Failed" : "Неуспешен";
+  }
+  return status || ui.unknownStatus || ui.unknown || "-";
+}
+
+function localizePdfPeriod(period, language = "bg") {
+  if (!period) {
+    return "-";
+  }
+  if (period === "monthly") {
+    return language === "en" ? "Current month" : "Текущ месец";
+  }
+  if (period === "yearly") {
+    return language === "en" ? "Current year" : "Текуща година";
+  }
+  if (period === "custom") {
+    return language === "en" ? "Custom range" : "Персонален избор";
+  }
+  return period;
+}
+
+function localizePdfStyle(style, language = "bg") {
+  if (!style) {
+    return "-";
+  }
+  if (style === "family-story") {
+    return language === "en" ? "Family story" : "Семейна история";
+  }
+  if (style === "timeline") {
+    return language === "en" ? "Chronological" : "Хронологичен";
+  }
+  if (style === "highlights") {
+    return language === "en" ? "Highlights" : "Акценти";
+  }
+  return style;
 }
 
 function normalizeName(value) {

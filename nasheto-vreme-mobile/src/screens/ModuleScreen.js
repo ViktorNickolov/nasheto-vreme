@@ -23,6 +23,7 @@ import {
   uploadFamilyFileMobile
 } from "../api/http";
 import { useAppLanguage } from "../config/language";
+import { localizeTimelineType } from "../i18n/timelineTypeLabels";
 
 const initialPdfForm = {
   period: "monthly",
@@ -111,6 +112,7 @@ export default function ModuleScreen({ route }) {
         uploading: "Uploading...",
         uploadPhoto: "Upload photo",
         user: "User",
+        email: "Email",
         family: "Family",
         name: "Name",
         members: "Members",
@@ -178,6 +180,7 @@ export default function ModuleScreen({ route }) {
         uploading: "Качване...",
         uploadPhoto: "Качи снимка",
         user: "Потребител",
+        email: "Имейл",
         family: "Семейство",
         name: "Име",
         members: "Членове",
@@ -500,7 +503,9 @@ export default function ModuleScreen({ route }) {
       if (response?.deliveryStatus === "SENT") {
         setInfo(text.inviteSent);
       } else {
-        setInfo(`${text.emailNotSent} (${response?.deliveryStatus || "UNKNOWN"}). Link: ${response?.inviteLink || "-"}`);
+        const statusLabel = localizeInviteStatus(response?.deliveryStatus, questionLanguage);
+        const linkLabel = questionLanguage === "en" ? "Link" : "Линк";
+        setInfo(`${text.emailNotSent} (${statusLabel}). ${linkLabel}: ${response?.inviteLink || "-"}`);
       }
     } catch (err) {
       setError(err.message || text.inviteSendFailed);
@@ -649,7 +654,7 @@ export default function ModuleScreen({ route }) {
           <Text style={styles.primaryBtnText}>{busy ? text.uploading : text.uploadPhoto}</Text>
         </Pressable>
         <Text style={styles.rowText}>{text.user}: {profile ? `${profile.firstName} ${profile.lastName}` : "-"}</Text>
-        <Text style={styles.rowText}>Email: {profile?.email || "-"}</Text>
+        <Text style={styles.rowText}>{text.email}: {profile?.email || "-"}</Text>
         <Text style={styles.rowText}>{text.family}: {profile?.familyName || family?.name || "-"}</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
@@ -702,7 +707,7 @@ export default function ModuleScreen({ route }) {
         {familyMembersWithLogged.map((member) => (
           <View key={member.id || `${member.email}-${member.role}`} style={styles.item}>
             <Text style={styles.itemTitle}>{member.firstName} {member.lastName}</Text>
-            <Text style={styles.itemMeta}>{member.role} | {member.email}</Text>
+            <Text style={styles.itemMeta}>{localizeRole(member.role, questionLanguage)} | {member.email}</Text>
           </View>
         ))}
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -857,14 +862,14 @@ export default function ModuleScreen({ route }) {
                 style={[styles.filterChip, isActive && styles.filterChipActive]}
                 onPress={() => setSelectedTimelineMemberId(memberId)}
               >
-                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{resolveMemberName(member)}</Text>
+                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{resolveMemberName(member, questionLanguage)}</Text>
               </Pressable>
             );
           })}
         </View>
         {filteredTimeline.map((item) => (
           <View key={item.sourceId || `${item.type}-${item.createdAt}`} style={styles.item}>
-            <Text style={styles.itemTitle}>{item.type} | {item.title}</Text>
+            <Text style={styles.itemTitle}>{localizeTimelineType(item.type, questionLanguage)} | {item.title}</Text>
             <Text style={styles.rowText} numberOfLines={2}>{item.details || text.noDetails}</Text>
             {renderAttachmentActions(item.imageUrl, item.title)}
             <Text style={styles.itemMeta}>{item.author || text.memberFallback} | {formatDate(item.createdAt, questionLanguage)}</Text>
@@ -902,9 +907,9 @@ export default function ModuleScreen({ route }) {
         <Text style={styles.secondaryBtnText}>{text.downloadPdf}</Text>
       </Pressable>
 
-      <Text style={styles.rowText}>{text.status}: {pdfPreview?.status || "-"}</Text>
-      <Text style={styles.rowText}>{text.period}: {pdfPreview?.period || pdfForm.period}</Text>
-      <Text style={styles.rowText}>{text.style}: {pdfPreview?.style || pdfForm.style}</Text>
+      <Text style={styles.rowText}>{text.status}: {localizePdfStatus(pdfPreview?.status, questionLanguage)}</Text>
+      <Text style={styles.rowText}>{text.period}: {localizePdfPeriod(pdfPreview?.period || pdfForm.period, questionLanguage)}</Text>
+      <Text style={styles.rowText}>{text.style}: {localizePdfStyle(pdfPreview?.style || pdfForm.style, questionLanguage)}</Text>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {info ? <Text style={styles.info}>{info}</Text> : null}
@@ -1035,13 +1040,79 @@ function isWithinDateRange(value, fromDate, toDate) {
   return true;
 }
 
-function resolveMemberName(member) {
-  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || "Member";
+function resolveMemberName(member, language = "bg") {
+  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || (language === "en" ? "Member" : "Член");
 }
 
 function normalizeName(value) {
   return String(value || "").trim().toLowerCase();
 }
+
+function localizeRole(role, language = "bg") {
+  if (role === "PARENT") {
+    return language === "en" ? "Parent" : "Родител";
+  }
+  if (role === "CHILD") {
+    return language === "en" ? "Child" : "Дете";
+  }
+  if (role === "MEMBER") {
+    return language === "en" ? "Member" : "Член";
+  }
+  return role || "-";
+}
+
+function localizeInviteStatus(status, language = "bg") {
+  if (status === "SENT") {
+    return language === "en" ? "Sent" : "Изпратен";
+  }
+  if (status === "FAILED") {
+    return language === "en" ? "Failed" : "Неуспешен";
+  }
+  return status || (language === "en" ? "Unknown" : "Неизвестен");
+}
+
+function localizePdfStatus(status, language = "bg") {
+  if (!status) {
+    return "-";
+  }
+  if (status === "READY") {
+    return language === "en" ? "Ready" : "Готов";
+  }
+  if (status === "PROCESSING") {
+    return language === "en" ? "Processing" : "Обработва се";
+  }
+  if (status === "FAILED") {
+    return language === "en" ? "Failed" : "Неуспешен";
+  }
+  return status;
+}
+
+function localizePdfPeriod(period, language = "bg") {
+  if (period === "monthly") {
+    return language === "en" ? "Current month" : "Текущ месец";
+  }
+  if (period === "yearly") {
+    return language === "en" ? "Current year" : "Текуща година";
+  }
+  if (period === "custom") {
+    return language === "en" ? "Custom range" : "Персонален избор";
+  }
+  return period || "-";
+}
+
+function localizePdfStyle(style, language = "bg") {
+  if (style === "family-story") {
+    return language === "en" ? "Family story" : "Семейна история";
+  }
+  if (style === "timeline") {
+    return language === "en" ? "Chronological" : "Хронологичен";
+  }
+  if (style === "highlights") {
+    return language === "en" ? "Highlights" : "Акценти";
+  }
+  return style || "-";
+}
+
 
 async function writeBinaryToFile(path, arrayBuffer) {
   const base64 = arrayBufferToBase64(arrayBuffer);

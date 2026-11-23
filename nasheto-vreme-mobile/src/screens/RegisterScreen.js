@@ -10,6 +10,7 @@ export default function RegisterScreen({ navigation }) {
     ? {
         title: "Create profile",
         subtitle: "Create a family space for your memories.",
+        email: "Email",
         password: "Password",
         firstName: "First name",
         lastName: "Last name",
@@ -20,6 +21,7 @@ export default function RegisterScreen({ navigation }) {
     : {
         title: "Създай профил",
         subtitle: "Направете семейно пространство за вашите спомени.",
+        email: "Имейл",
         password: "Парола",
         firstName: "Име",
         lastName: "Фамилия",
@@ -60,7 +62,7 @@ export default function RegisterScreen({ navigation }) {
       <View style={styles.formCard}>
         <Text style={styles.title}>{labels.title}</Text>
         <Text style={styles.subtitle}>{labels.subtitle}</Text>
-        <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#8b7f70" autoCapitalize="none" value={form.email} onChangeText={(v) => update("email", v)} />
+        <TextInput style={styles.input} placeholder={labels.email} placeholderTextColor="#8b7f70" autoCapitalize="none" value={form.email} onChangeText={(v) => update("email", v)} />
         <TextInput style={styles.input} placeholder={labels.password} placeholderTextColor="#8b7f70" secureTextEntry value={form.password} onChangeText={(v) => update("password", v)} />
         <TextInput style={styles.input} placeholder={labels.firstName} placeholderTextColor="#8b7f70" value={form.firstName} onChangeText={(v) => update("firstName", v)} />
         <TextInput style={styles.input} placeholder={labels.lastName} placeholderTextColor="#8b7f70" value={form.lastName} onChangeText={(v) => update("lastName", v)} />

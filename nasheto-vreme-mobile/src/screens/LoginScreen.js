@@ -10,6 +10,7 @@ export default function LoginScreen({ navigation }) {
     ? {
         title: "Our Time",
         subtitle: "A calm and natural place for your family.",
+        email: "Email",
         password: "Password",
         loginFailed: "Login failed.",
         login: "Login",
@@ -18,6 +19,7 @@ export default function LoginScreen({ navigation }) {
     : {
         title: "Нашето време",
         subtitle: "Естествено и спокойно място за вашето семейство.",
+        email: "Имейл",
         password: "Парола",
         loginFailed: "Входът не бе успешен.",
         login: "Вход",
@@ -44,7 +46,7 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.subtitle}>{labels.subtitle}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Email"
+          placeholder={labels.email}
           placeholderTextColor="#8b7f70"
           autoCapitalize="none"
           value={email}

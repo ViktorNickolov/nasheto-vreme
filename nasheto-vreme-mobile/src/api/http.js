@@ -1,12 +1,18 @@
 import { getApiBaseUrl } from "../config/env";
 import { clearSession, getAccessToken, setSession } from "../auth/session";
 import { clearRefreshToken, loadRefreshToken, saveRefreshToken } from "../auth/tokenStorage";
+import { getApiErrorMessage } from "../i18n/apiErrorMessages";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json"
 };
 
 const AUTH_RETRY_EXCLUDED_PATHS = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
+let apiLanguage = "bg";
+
+export function setMobileApiLanguage(language) {
+  apiLanguage = language === "en" ? "en" : "bg";
+}
 
 function buildHeaders(headers = {}) {
   const accessToken = getAccessToken();
@@ -26,7 +32,21 @@ async function parseJson(response) {
   if (!text) {
     return null;
   }
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(getApiErrorMessage("invalidJson", apiLanguage));
+  }
+}
+
+function buildErrorMessage(response, body) {
+  if (body?.message) {
+    return body.message;
+  }
+  if (response?.statusText) {
+    return `${response.status} ${response.statusText}`;
+  }
+  return getApiErrorMessage("genericRequestFailed", apiLanguage);
 }
 
 async function request(path, options = {}, allowRetry = true) {
@@ -46,7 +66,7 @@ async function request(path, options = {}, allowRetry = true) {
   const body = await parseJson(response);
 
   if (!response.ok) {
-    const error = new Error(body?.message || `${response.status} ${response.statusText}`);
+    const error = new Error(buildErrorMessage(response, body));
     error.status = response.status;
     throw error;
   }
@@ -145,7 +165,7 @@ export async function uploadProfileImageMobile(fileAsset, allowRetry = true) {
 
   const body = await parseJson(response);
   if (!response.ok) {
-    const error = new Error(body?.message || `${response.status} ${response.statusText}`);
+    const error = new Error(buildErrorMessage(response, body));
     error.status = response.status;
     throw error;
   }
@@ -225,7 +245,7 @@ export async function uploadFamilyFileMobile(familyId, fileAsset, allowRetry = t
 
   const body = await parseJson(response);
   if (!response.ok) {
-    const error = new Error(body?.message || `${response.status} ${response.statusText}`);
+    const error = new Error(buildErrorMessage(response, body));
     error.status = response.status;
     throw error;
   }
@@ -256,7 +276,7 @@ async function fetchBinary(path, options = {}, allowRetry = true) {
     if (contentType.includes("application/json")) {
       body = await parseJson(response);
     }
-    const error = new Error(body?.message || `${response.status} ${response.statusText}`);
+    const error = new Error(buildErrorMessage(response, body));
     error.status = response.status;
     throw error;
   }
@@ -287,7 +307,7 @@ export function downloadUploadedFileMobile(relativePath) {
 
   const fileName = (pathWithoutMeta || "").split(/[\\/]/).pop();
   if (!fileName) {
-    throw new Error("Missing file reference");
+    throw new Error(getApiErrorMessage("missingFileReference", apiLanguage));
   }
   const meta = new URLSearchParams(metaRaw);
   const suggestedName = meta.get("orig") || "";
