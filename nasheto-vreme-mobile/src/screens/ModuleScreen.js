@@ -1099,6 +1099,7 @@ const styles = StyleSheet.create({
     borderColor: "#e2d8cb",
     borderRadius: 18,
     padding: 12,
+    paddingTop: 12,
     gap: 10,
     margin: 12,
     shadowColor: "#4f473f",

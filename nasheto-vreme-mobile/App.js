@@ -27,7 +27,9 @@ export default function App() {
   const [appLanguage, setAppLanguage] = useState(() => detectAppLanguage());
   const languageToggleLabel = appLanguage === "bg" ? "EN" : "БГ";
   const commonScreenOptions = useMemo(() => ({
-    headerTitleAlign: "center",
+    // Keep room for header actions (e.g. language toggle) on narrow devices.
+    headerTitleAlign: "left",
+    headerBackTitleVisible: false,
     headerStyle: { backgroundColor: "#f4efe4" },
     headerTintColor: "#4f473f",
     headerTitleStyle: { fontWeight: "700" },
