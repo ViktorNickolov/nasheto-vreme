@@ -128,6 +128,15 @@ button:hover {
   margin-bottom: 8px;
 }
 
+.auth-header {
+  margin-bottom: 14px;
+}
+
+.auth-header h1 {
+  color: #5f4f41;
+  margin-bottom: 6px;
+}
+
 .brand-row {
   display: flex;
   gap: 12px;
@@ -209,6 +218,24 @@ button:hover {
   gap: 10px;
 }
 
+.auth-switch-link {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #6b7f64;
+  font-size: 13px;
+  text-decoration: underline;
+  justify-self: center;
+}
+
+.auth-switch-link:hover {
+  transform: none;
+  filter: none;
+  color: #5a6e53;
+}
+
 .shell {
   max-width: min(1380px, calc(100vw - 28px));
   margin: 0 auto;
@@ -240,11 +267,7 @@ button:hover {
 }
 
 .sidebar::after {
-  content: "";
-  border-radius: 16px;
-  border: 1px dashed #d3b190;
-  background: linear-gradient(165deg, rgba(201, 136, 96, 0.18) 0%, rgba(165, 109, 74, 0.08) 100%);
-  min-height: 120px;
+  content: none;
 }
 
 .config-form {
@@ -344,6 +367,57 @@ button:hover {
 
 .mood-card {
   background: linear-gradient(160deg, #eef3e7 0%, #f8ede2 100%);
+}
+
+.pulse-card {
+  background: linear-gradient(160deg, #f9efe3 0%, #fdf8ef 100%);
+}
+
+.pulse-subtitle {
+  margin-bottom: 8px;
+}
+
+.pulse-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.pulse-stat-item {
+  background: #fff8ee;
+  border: 1px solid #ead8c2;
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.pulse-stat-item b {
+  display: block;
+  font-size: 18px;
+  line-height: 1.1;
+  color: #694f3f;
+}
+
+.pulse-stat-item span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8a7767;
+}
+
+.pulse-tip-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: #5f4f41;
+  font-size: 13px;
+}
+
+.pulse-tip-text {
+  margin: 0;
+  color: #6f6256;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .mood-quote {

@@ -162,6 +162,8 @@ const webText = {
     loading: "Зареждане...",
     email: "Имейл",
     appName: "Нашето време",
+    noAccountRegister: "Нямате профил? Регистрация",
+    haveAccountLogin: "Имате профил? Вход",
     logout: "Изход",
     welcome: "Добре дошли",
     close: "Затвори",
@@ -171,7 +173,14 @@ const webText = {
     unknown: "НЕИЗВЕСТНО",
     unknownStatus: "Неизвестен",
     sessionRestored: "Сесията е възстановена.",
-    emailNotSentPrefix: "Имейлът не е изпратен"
+    emailNotSentPrefix: "Имейлът не е изпратен",
+    familyPulse: "Семеен ритъм",
+    quickStats: "Бързи числа",
+    answersCount: "Отговори",
+    momentsCount: "Моменти",
+    timelineCount: "Хроника",
+    pulseTipTitle: "Малка идея за днес",
+    pulseTip: "Добавете един момент със снимка и кратко описание."
   },
   en: {
     inviteOpened: "You opened a family invite link.",
@@ -253,6 +262,8 @@ const webText = {
     loading: "Loading...",
     email: "Email",
     appName: "Our Time",
+    noAccountRegister: "No account? Register",
+    haveAccountLogin: "Have an account? Login",
     logout: "Logout",
     welcome: "Welcome",
     close: "Close",
@@ -262,7 +273,14 @@ const webText = {
     unknown: "UNKNOWN",
     unknownStatus: "Unknown",
     sessionRestored: "Session restored.",
-    emailNotSentPrefix: "Email was not sent"
+    emailNotSentPrefix: "Email was not sent",
+    familyPulse: "Family pulse",
+    quickStats: "Quick stats",
+    answersCount: "Answers",
+    momentsCount: "Moments",
+    timelineCount: "Timeline",
+    pulseTipTitle: "Small idea for today",
+    pulseTip: "Add one moment with a photo and short description."
   }
 };
 
@@ -403,6 +421,12 @@ export default function App() {
     result = result.filter((item) => isWithinDateRange(item?.createdAt, timelineDateFrom, timelineDateTo));
     return result;
   }, [members, selectedTimelineMemberId, selectedTimelineType, timeline, timelineDateFrom, timelineDateTo]);
+
+  const quickStats = useMemo(() => ([
+    { key: "answers", label: ui.answersCount, value: ownAnswers.length },
+    { key: "moments", label: ui.momentsCount, value: ownMoments.length },
+    { key: "timeline", label: ui.timelineCount, value: filteredTimeline.length }
+  ]), [ui, ownAnswers.length, ownMoments.length, filteredTimeline.length]);
 
   const familyMembersWithLogged = useMemo(() => {
     const list = Array.isArray(members) ? [...members] : [];
@@ -1199,21 +1223,9 @@ export default function App() {
                 {languageToggleLabel}
               </button>
             </div>
-            <div className="brand-row">
-                <div className="brand-mark app-logo" aria-label={ui.appName}></div>
-              <div>
-                  <h1>{ui.appName}</h1>
-                  <p className="small-muted">{ui.appSubtitle}</p>
-              </div>
-            </div>
-
-            <div className="auth-tabs">
-              <button className={tab === "login" ? "active" : ""} id="showLoginBtn" type="button" onClick={() => setTab("login")}>
-                {ui.loginTab}
-              </button>
-              <button className={tab === "register" ? "active" : ""} id="showRegisterBtn" type="button" onClick={() => setTab("register")}>
-                {ui.registerTab}
-              </button>
+            <div className="auth-header">
+              <h1>{ui.appName}</h1>
+              <p className="small-muted">{ui.appSubtitle}</p>
             </div>
 
             {tab === "login" ? (
@@ -1221,6 +1233,9 @@ export default function App() {
                 <input name="email" type="email" placeholder={ui.email} value={loginForm.email} onChange={updateForm(setLoginForm)} required />
                 <input name="password" type="password" placeholder={ui.password} value={loginForm.password} onChange={updateForm(setLoginForm)} required />
                 <button disabled={busy} type="submit">{busy ? ui.loading : ui.loginTab}</button>
+                <button type="button" className="auth-switch-link" onClick={() => setTab("register")}>
+                  {ui.noAccountRegister}
+                </button>
               </form>
             ) : (
               <form className="auth-form" id="registerForm" onSubmit={submitRegister}>
@@ -1239,6 +1254,9 @@ export default function App() {
                   />
                 ) : null}
                 <button disabled={busy} type="submit">{busy ? ui.loading : ui.createProfile}</button>
+                <button type="button" className="auth-switch-link" onClick={() => setTab("login")}>
+                  {ui.haveAccountLogin}
+                </button>
               </form>
             )}
 
@@ -1281,6 +1299,21 @@ export default function App() {
                   <div className="polaroid-line"></div>
                 </div>
               </div>
+            </section>
+
+            <section className="sidebar-card pulse-card">
+              <h3>{ui.familyPulse}</h3>
+              <p className="small-muted pulse-subtitle">{ui.quickStats}</p>
+              <div className="pulse-stats">
+                {quickStats.map((item) => (
+                  <article key={item.key} className="pulse-stat-item">
+                    <b>{item.value}</b>
+                    <span>{item.label}</span>
+                  </article>
+                ))}
+              </div>
+              <p className="pulse-tip-title">{ui.pulseTipTitle}</p>
+              <p className="pulse-tip-text">{ui.pulseTip}</p>
             </section>
           </aside>
 
