@@ -187,6 +187,13 @@ export function getFamilyMembers(familyId) {
   return api(`/families/${familyId}/members`);
 }
 
+export function sendFamilyInvitation(familyId, payload) {
+  return api(`/families/${familyId}/invitations`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
 export function getFamilyAnswers(familyId) {
   return api(`/families/${familyId}/answers`);
 }
@@ -245,6 +252,32 @@ export async function uploadImage(familyId, file, allowAuthRetry = true) {
 
   const body = await parseJsonBody(response);
 
+  if (!response.ok) {
+    throw createApiError(response, body);
+  }
+
+  return body;
+}
+
+export async function uploadProfileImage(file, allowAuthRetry = true) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetchWithTimeout(`${getApiBaseUrl()}/auth/me/profile-image`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...authHeader()
+    },
+    body: formData
+  });
+
+  if (response.status === 401 && allowAuthRetry) {
+    await refreshSession();
+    return uploadProfileImage(file, false);
+  }
+
+  const body = await parseJsonBody(response);
   if (!response.ok) {
     throw createApiError(response, body);
   }

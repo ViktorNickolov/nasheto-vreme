@@ -5,6 +5,7 @@ public record UserProfileResponse(
         String email,
         String firstName,
         String lastName,
+        String profileImageUrl,
         String role,
         Long familyId,
         String familyName

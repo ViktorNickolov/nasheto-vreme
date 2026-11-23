@@ -119,6 +119,40 @@ export function getProfileMobile() {
   return request("/auth/me");
 }
 
+export async function uploadProfileImageMobile(fileAsset, allowRetry = true) {
+  const formData = new FormData();
+  formData.append("file", {
+    uri: fileAsset.uri,
+    name: fileAsset.name || "profile-photo.jpg",
+    type: fileAsset.mimeType || "image/jpeg"
+  });
+
+  const response = await fetch(`${getApiBaseUrl()}/auth/me/profile-image`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {})
+    },
+    body: formData
+  });
+
+  if (response.status === 401 && allowRetry) {
+    const refreshed = await refreshMobileSession();
+    if (refreshed) {
+      return uploadProfileImageMobile(fileAsset, false);
+    }
+  }
+
+  const body = await parseJson(response);
+  if (!response.ok) {
+    const error = new Error(body?.message || `${response.status} ${response.statusText}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  return body;
+}
+
 export function getTodayQuestionMobile() {
   return request("/questions/today");
 }
@@ -140,6 +174,13 @@ export function getFamilyMobile(familyId) {
 
 export function getFamilyMembersMobile(familyId) {
   return request(`/families/${familyId}/members`);
+}
+
+export function sendFamilyInvitationMobile(familyId, payload) {
+  return request(`/families/${familyId}/invitations`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
 }
 
 export function listMomentsMobile(familyId) {

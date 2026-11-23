@@ -3,6 +3,17 @@ spring:
     name: nasheto-vreme-backend
   profiles:
     active: local
+  mail:
+#    host: ${APP_MAIL_HOST:smtp-relay.brevo.com}
+    host: ${APP_MAIL_HOST:}
+#    port: ${APP_MAIL_PORT:587}
+    port: ${APP_MAIL_PORT:}
+    username: ${APP_MAIL_USERNAME:apikey}
+#    password: ${APP_MAIL_PASSWORD:your-brevo-smtp-key}
+    password: ${APP_MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${APP_MAIL_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${APP_MAIL_SMTP_STARTTLS:true}
 
 server:
   port: 8088
@@ -34,6 +45,12 @@ app:
       secure: ${APP_REFRESH_COOKIE_SECURE:false}
   upload:
     max-file-size-bytes: ${APP_UPLOAD_MAX_FILE_SIZE_BYTES:5242880}
+  invites:
+    enabled: ${APP_INVITES_ENABLED:true}
+    expires-in-hours: ${APP_INVITES_EXPIRES_IN_HOURS:72}
+    sender-email: ${APP_INVITES_SENDER_EMAIL:viktor.nickolov@gmail.com}
+    sender-name: ${APP_INVITES_SENDER_NAME:Nasheto Vreme}
+    accept-url-template: ${APP_INVITES_ACCEPT_URL_TEMPLATE:http://localhost:5173/?inviteToken={token}&inviteEmail={email}}
 
 logging:
   level:

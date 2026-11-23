@@ -8,7 +8,8 @@ export default function RegisterScreen({ navigation }) {
     password: "",
     firstName: "",
     lastName: "",
-    familyName: ""
+    familyName: "",
+    inviteToken: ""
   });
   const [error, setError] = useState("");
 
@@ -19,7 +20,11 @@ export default function RegisterScreen({ navigation }) {
   async function onRegister() {
     try {
       setError("");
-      await registerMobile(form);
+      await registerMobile({
+        ...form,
+        familyName: form.familyName.trim(),
+        inviteToken: form.inviteToken.trim()
+      });
       navigation.replace("Home");
     } catch (err) {
       setError(err.message || "Регистрацията не бе успешна.");

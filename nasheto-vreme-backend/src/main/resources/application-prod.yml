@@ -7,6 +7,14 @@ spring:
     show-sql: false
   flyway:
     enabled: true
+  mail:
+    host: ${APP_MAIL_HOST}
+    port: ${APP_MAIL_PORT:587}
+    username: ${APP_MAIL_USERNAME}
+    password: ${APP_MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: ${APP_MAIL_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${APP_MAIL_SMTP_STARTTLS:true}
 
 app:
   jwt:
@@ -24,6 +32,12 @@ app:
   upload:
     base-dir: ${APP_UPLOAD_BASE_DIR:uploads/images}
     max-file-size-bytes: ${APP_UPLOAD_MAX_FILE_SIZE_BYTES:5242880}
+  invites:
+    enabled: ${APP_INVITES_ENABLED:false}
+    expires-in-hours: ${APP_INVITES_EXPIRES_IN_HOURS:72}
+    sender-email: ${APP_INVITES_SENDER_EMAIL}
+    sender-name: ${APP_INVITES_SENDER_NAME:Nasheto Vreme}
+    accept-url-template: ${APP_INVITES_ACCEPT_URL_TEMPLATE}
 
 logging:
   level:

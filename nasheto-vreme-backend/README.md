@@ -92,6 +92,32 @@ APP_CORS_ORIGINS=https://app.example.com
 - Keep rotation history in your secret manager metadata (who rotated, when, and why).
 - Never share secrets over chat/email; inject them at runtime via environment variables or secret stores.
 
+## Family Invite Email (Brevo free tier)
+
+The backend supports sending family invitation emails via SMTP.
+
+Required runtime variables:
+
+- `APP_INVITES_ENABLED=true`
+- `APP_INVITES_SENDER_EMAIL=<verified sender in Brevo>`
+- `APP_INVITES_ACCEPT_URL_TEMPLATE=https://your-frontend.example.com/?inviteToken={token}&inviteEmail={email}`
+- `APP_MAIL_HOST=smtp-relay.brevo.com`
+- `APP_MAIL_PORT=587`
+- `APP_MAIL_USERNAME=apikey`
+- `APP_MAIL_PASSWORD=<BREVO_SMTP_KEY>`
+
+Optional:
+
+- `APP_INVITES_EXPIRES_IN_HOURS=72`
+- `APP_MAIL_SMTP_AUTH=true`
+- `APP_MAIL_SMTP_STARTTLS=true`
+
+Flow:
+
+1. Parent sends invite from family module (`POST /api/v1/families/{id}/invitations`).
+2. Recipient opens email link and registers with the invite token.
+3. Registration joins the invited user to the existing family with invited role (`PARENT`/`CHILD`).
+
 ## Next Step
 
 After Foundation, implement `Auth` module (JWT register/login), then continue with `Family`, `Questions`, `Moments`, `Uploads`, and `Timeline`.

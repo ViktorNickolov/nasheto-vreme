@@ -19,8 +19,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.WebUtils;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -104,6 +106,15 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
         return authService.getProfileByEmail(user.getUsername());
+    }
+
+    @PostMapping("/me/profile-image")
+    public UserProfileResponse uploadProfileImage(@RequestParam("file") MultipartFile file,
+                                                  @AuthenticationPrincipal AuthenticatedUser user) {
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        }
+        return authService.updateProfileImage(user.getUsername(), file);
     }
 
     private void writeRefreshCookie(HttpServletResponse response, AuthResponse authResponse) {

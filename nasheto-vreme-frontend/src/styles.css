@@ -890,6 +890,21 @@ button:hover {
   text-overflow: ellipsis;
 }
 
+.profile-image-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #dcc8b2;
+  display: block;
+  margin-bottom: 10px;
+  background: #f2e8dc;
+}
+
+.profile-upload-inline {
+  margin-bottom: 10px;
+}
+
 pre {
   margin: 0;
   white-space: pre-wrap;

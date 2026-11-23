@@ -19,15 +19,18 @@ import {
   me,
   refreshToken,
   register,
+  sendFamilyInvitation,
   setApiBaseUrl,
   setAuth,
-  uploadImage
+  uploadImage,
+  uploadProfileImage
 } from "./api.js";
 
 const initialLogin = { email: "", password: "" };
-const initialRegister = { email: "", password: "", firstName: "", lastName: "", familyName: "" };
+const initialRegister = { email: "", password: "", firstName: "", lastName: "", familyName: "", inviteToken: "" };
 const initialAnswer = { answerText: "" };
 const initialMoment = { title: "", description: "", imageUrl: "" };
+const initialInvite = { email: "", role: "CHILD" };
 const initialPdf = {
   period: "monthly",
   style: "family-story",
@@ -85,6 +88,17 @@ function getInitialActiveModule() {
   return "profile";
 }
 
+function readInviteContextFromUrl() {
+  if (typeof window === "undefined") {
+    return { token: "", email: "" };
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    token: (params.get("inviteToken") || "").trim(),
+    email: (params.get("inviteEmail") || "").trim()
+  };
+}
+
 export default function App() {
   const [tab, setTab] = useState("login");
   const [auth, setAuthState] = useState(getAuth());
@@ -105,6 +119,7 @@ export default function App() {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [activeModule, setActiveModule] = useState(() => getInitialActiveModule());
   const [sidebarHighlight] = useState(() => pickSidebarHighlight());
+  const [inviteContext] = useState(() => readInviteContextFromUrl());
   const [selectedTimelineMemberId, setSelectedTimelineMemberId] = useState("all");
   const [selectedTimelineType, setSelectedTimelineType] = useState("all");
   const [timelineDateFrom, setTimelineDateFrom] = useState("");
@@ -116,8 +131,11 @@ export default function App() {
   const [momentForm, setMomentForm] = useState(initialMoment);
   const [pdfForm, setPdfForm] = useState(initialPdf);
   const [uploadFile, setUploadFile] = useState(null);
+  const [profileUploadFile, setProfileUploadFile] = useState(null);
+  const [inviteForm, setInviteForm] = useState(initialInvite);
 
   const isLogged = Boolean(auth?.accessToken);
+  const canInviteMembers = profile?.role === "PARENT";
 
   const profileInfo = useMemo(() => {
     if (!profile) {
@@ -244,6 +262,26 @@ export default function App() {
     let cancelled = false;
 
     async function bootstrapSession() {
+      if (inviteContext.token) {
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        clearAuth();
+        setAuthState(null);
+        resetDashboardState();
+        setTab("register");
+        setRegisterForm((current) => ({
+          ...current,
+          inviteToken: inviteContext.token,
+          email: inviteContext.email || current.email
+        }));
+        setAuthInfo("Отворихте покана за присъединяване към семейство.");
+        if (!cancelled) {
+          setBootstrapping(false);
+        }
+        return;
+      }
+
       const current = getAuth();
       if (current?.accessToken) {
         setAuthState(current);
@@ -284,7 +322,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [inviteContext.email, inviteContext.token]);
 
   useEffect(() => {
     return () => {
@@ -419,13 +457,39 @@ export default function App() {
   async function submitRegister(event) {
     event.preventDefault();
     await withBusy(async () => {
-      const result = await register(registerForm);
+      const payload = {
+        ...registerForm,
+        familyName: registerForm.familyName?.trim() || "",
+        inviteToken: registerForm.inviteToken?.trim() || ""
+      };
+      const result = await register(payload);
       setAuth(result);
       setAuthState(result);
       setAuthInfo("Успешна регистрация. Таблото е заредено.");
       await refreshDashboardData();
       show(result);
     });
+  }
+
+  async function submitInvite(event) {
+    event.preventDefault();
+    await withBusy(async () => {
+      if (!profile?.familyId) {
+        throw new Error("Профилът не е зареден.");
+      }
+
+      const response = await sendFamilyInvitation(Number(profile.familyId), {
+        email: inviteForm.email.trim(),
+        role: inviteForm.role
+      });
+      setInviteForm(initialInvite);
+      show(response);
+      if (response?.deliveryStatus === "SENT") {
+        setAuthInfo("Поканата е изпратена успешно.");
+      } else {
+        setAuthInfo(`Имейлът не е изпратен (${response?.deliveryStatus || "UNKNOWN"}). Използвайте линка ръчно: ${response?.inviteLink || "-"}`);
+      }
+    }, { authSensitive: true });
   }
 
   function submitConfig(event) {
@@ -569,12 +633,41 @@ export default function App() {
     }, { authSensitive: true });
   }
 
+  async function onUploadProfilePhoto() {
+    await withBusy(async () => {
+      if (!profileUploadFile) {
+        throw new Error("Изберете снимка за профила.");
+      }
+      const updatedProfile = await uploadProfileImage(profileUploadFile);
+      setProfile(updatedProfile);
+      setProfileUploadFile(null);
+      show("Профилната снимка е обновена.");
+    }, { authSensitive: true });
+  }
+
   function renderActiveModule() {
     if (activeModule === "profile") {
       return (
         <section className="card">
           <h3>Моят профил</h3>
           <p className="small-muted module-note">Вашето лично пространство и семейна принадлежност.</p>
+          {profile?.profileImageUrl ? (
+            <ProfileImagePreview filePath={profile.profileImageUrl} />
+          ) : (
+            <p className="small-muted">Няма профилна снимка.</p>
+          )}
+          <div className="upload-inline profile-upload-inline">
+            <input
+              id="profileImageInput"
+              className="file-input-hidden"
+              type="file"
+              accept="image/*"
+              onChange={(event) => setProfileUploadFile(event.target.files?.[0] || null)}
+            />
+            <label htmlFor="profileImageInput" className="file-trigger">Избери профилна снимка</label>
+            {profileUploadFile ? <span className="attached-file">{profileUploadFile.name}</span> : null}
+            <button type="button" onClick={onUploadProfilePhoto} disabled={!profileUploadFile || busy}>Качи</button>
+          </div>
           <div className="info-grid" id="profileCard">
             <InfoItem label="Потребител" value={profile ? `${profile.firstName} ${profile.lastName}` : "-"} />
             <InfoItem label="Email" value={profile?.email || "-"} />
@@ -604,6 +697,28 @@ export default function App() {
               </article>
             ))}
           </div>
+          {canInviteMembers ? (
+            <form className="grid2" id="inviteForm" onSubmit={submitInvite}>
+              <input
+                name="email"
+                type="email"
+                placeholder="Email за покана"
+                value={inviteForm.email}
+                onChange={updateForm(setInviteForm)}
+                required
+              />
+              <label className="select-filter">
+                Роля
+                <select name="role" value={inviteForm.role} onChange={updateForm(setInviteForm)}>
+                  <option value="PARENT">Родител</option>
+                  <option value="CHILD">Дете</option>
+                </select>
+              </label>
+              <button type="submit">Изпрати покана</button>
+            </form>
+          ) : (
+            <p className="small-muted">Само родител може да изпраща покани.</p>
+          )}
         </section>
       );
     }
@@ -852,7 +967,16 @@ export default function App() {
                 <input name="password" type="password" placeholder="Парола" value={registerForm.password} onChange={updateForm(setRegisterForm)} required />
                 <input name="firstName" type="text" placeholder="Име" value={registerForm.firstName} onChange={updateForm(setRegisterForm)} required />
                 <input name="lastName" type="text" placeholder="Фамилия" value={registerForm.lastName} onChange={updateForm(setRegisterForm)} required />
-                <input name="familyName" type="text" placeholder="Име на семейство" value={registerForm.familyName} onChange={updateForm(setRegisterForm)} required />
+                {!registerForm.inviteToken?.trim() ? (
+                  <input
+                    name="familyName"
+                    type="text"
+                    placeholder="Име на семейство"
+                    value={registerForm.familyName}
+                    onChange={updateForm(setRegisterForm)}
+                    required
+                  />
+                ) : null}
                 <button disabled={busy} type="submit">{busy ? "Зареждане..." : "Създай профил"}</button>
               </form>
             )}
@@ -1022,6 +1146,50 @@ function AttachmentPreview({ filePath }) {
   }
 
   return null;
+}
+
+function ProfileImagePreview({ filePath }) {
+  const [imageSrc, setImageSrc] = useState("");
+
+  useEffect(() => {
+    let disposed = false;
+    let objectUrl = "";
+
+    async function loadImage() {
+      if (!filePath) {
+        setImageSrc("");
+        return;
+      }
+
+      try {
+        const result = await downloadUploadedFile(filePath);
+        if (disposed) {
+          return;
+        }
+        objectUrl = window.URL.createObjectURL(result.blob);
+        setImageSrc(objectUrl);
+      } catch {
+        if (!disposed) {
+          setImageSrc("");
+        }
+      }
+    }
+
+    loadImage();
+
+    return () => {
+      disposed = true;
+      if (objectUrl) {
+        window.URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [filePath]);
+
+  if (!imageSrc) {
+    return null;
+  }
+
+  return <img className="profile-image-preview" src={imageSrc} alt="Профилна снимка" />;
 }
 
 function matchesTimelineMember(item, member) {

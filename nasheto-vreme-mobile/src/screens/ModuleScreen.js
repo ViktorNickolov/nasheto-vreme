@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, StyleSheet, TextInput, Switch, Linking, Platform } from "react-native";
+import { View, Text, Pressable, StyleSheet, TextInput, Switch, Linking, Platform, ScrollView, Image } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as IntentLauncher from "expo-intent-launcher";
@@ -18,6 +18,8 @@ import {
   getTimelineMobile,
   getTodayQuestionMobile,
   listMomentsMobile,
+  sendFamilyInvitationMobile,
+  uploadProfileImageMobile,
   uploadFamilyFileMobile
 } from "../api/http";
 
@@ -48,6 +50,10 @@ export default function ModuleScreen({ route }) {
   const [selectedTimelineType, setSelectedTimelineType] = useState("all");
   const [timelineDateFrom, setTimelineDateFrom] = useState("");
   const [timelineDateTo, setTimelineDateTo] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("CHILD");
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [profileImageUri, setProfileImageUri] = useState("");
 
   const [pdfForm, setPdfForm] = useState(initialPdfForm);
   const [pdfPreview, setPdfPreview] = useState(null);
@@ -56,6 +62,7 @@ export default function ModuleScreen({ route }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const canInviteMembers = profile?.role === "PARENT";
 
   const familyId = useMemo(() => profile?.familyId, [profile]);
   const filteredAnswers = useMemo(() => {
@@ -165,6 +172,42 @@ export default function ModuleScreen({ route }) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfileImage() {
+      if (!profile?.profileImageUrl) {
+        if (active) {
+          setProfileImageUri("");
+        }
+        return;
+      }
+
+      try {
+        const file = await downloadUploadedFileMobile(profile.profileImageUrl);
+        if (!active) {
+          return;
+        }
+        const ext = extractExtension(extractFileNameFromDisposition(file.disposition) || "profile.jpg") || ".jpg";
+        const target = `${FileSystem.cacheDirectory}profile-${Date.now()}${ext}`;
+        await writeBinaryToFile(target, file.bytes);
+        if (active) {
+          setProfileImageUri(target);
+        }
+      } catch {
+        if (active) {
+          setProfileImageUri("");
+        }
+      }
+    }
+
+    loadProfileImage();
+
+    return () => {
+      active = false;
+    };
+  }, [profile?.profileImageUrl]);
+
   async function onSubmitAnswer() {
     if (!todayQuestion?.id || !familyId || !answerText.trim()) {
       return;
@@ -207,6 +250,39 @@ export default function ModuleScreen({ route }) {
     }
   }
 
+  async function onPickProfilePhoto() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "image/*",
+      copyToCacheDirectory: true,
+      multiple: false
+    });
+
+    if (!result.canceled && result.assets?.length > 0) {
+      setProfilePhotoFile(result.assets[0]);
+      setInfo(`Избрана профилна снимка: ${result.assets[0].name}`);
+    }
+  }
+
+  async function onUploadProfilePhoto() {
+    if (!profilePhotoFile) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setInfo("");
+    try {
+      const updatedProfile = await uploadProfileImageMobile(profilePhotoFile);
+      setProfile(updatedProfile);
+      setProfilePhotoFile(null);
+      setInfo("Профилната снимка е обновена.");
+    } catch (err) {
+      setError(err.message || "Неуспешно качване на профилна снимка.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onCreateMoment() {
     if (!familyId || !momentTitle.trim()) {
       return;
@@ -242,6 +318,37 @@ export default function ModuleScreen({ route }) {
       setInfo("Моментът е добавен успешно.");
     } catch (err) {
       setError(err.message || "Неуспешно създаване на момент.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSendInvite() {
+    if (!canInviteMembers) {
+      return;
+    }
+
+    if (!familyId || !inviteEmail.trim()) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setInfo("");
+    try {
+      const response = await sendFamilyInvitationMobile(familyId, {
+        email: inviteEmail.trim(),
+        role: inviteRole
+      });
+      setInviteEmail("");
+      setInviteRole("CHILD");
+      if (response?.deliveryStatus === "SENT") {
+        setInfo("Поканата е изпратена успешно.");
+      } else {
+        setInfo(`Имейлът не е изпратен (${response?.deliveryStatus || "UNKNOWN"}). Линк: ${response?.inviteLink || "-"}`);
+      }
+    } catch (err) {
+      setError(err.message || "Неуспешно изпращане на поканата.");
     } finally {
       setBusy(false);
     }
@@ -371,19 +478,72 @@ export default function ModuleScreen({ route }) {
     return (
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Моят профил</Text>
+        {profileImageUri ? <Image source={{ uri: profileImageUri }} style={styles.profileImage} /> : null}
+        {!profileImageUri ? <Text style={styles.emptyText}>Няма профилна снимка.</Text> : null}
+        <View style={styles.fileActionsRow}>
+          <Pressable onPress={onPickProfilePhoto}>
+            <Text style={styles.fileAction}>Избери профилна снимка</Text>
+          </Pressable>
+          {profilePhotoFile ? <Text style={styles.itemMeta} numberOfLines={1}>{profilePhotoFile.name}</Text> : null}
+        </View>
+        <Pressable
+          style={[styles.primaryBtn, (busy || !profilePhotoFile) && styles.disabled]}
+          onPress={onUploadProfilePhoto}
+          disabled={busy || !profilePhotoFile}
+        >
+          <Text style={styles.primaryBtnText}>{busy ? "Качване..." : "Качи снимка"}</Text>
+        </Pressable>
         <Text style={styles.rowText}>Потребител: {profile ? `${profile.firstName} ${profile.lastName}` : "-"}</Text>
         <Text style={styles.rowText}>Email: {profile?.email || "-"}</Text>
         <Text style={styles.rowText}>Семейство: {profile?.familyName || family?.name || "-"}</Text>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {info ? <Text style={styles.info}>{info}</Text> : null}
       </View>
     );
   }
 
   if (moduleKey === "family") {
     return (
-      <View style={styles.card}>
+      <ScrollView style={styles.card} contentContainerStyle={styles.cardScrollContent}>
         <Text style={styles.cardTitle}>Вашето семейство</Text>
         <Text style={styles.rowText}>Име: {family?.name || "-"}</Text>
         <Text style={styles.rowText}>Членове: {members.length}</Text>
+
+        {canInviteMembers ? (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Email за покана"
+              value={inviteEmail}
+              onChangeText={setInviteEmail}
+              autoCapitalize="none"
+            />
+            <View style={styles.timelineFilters}>
+              <Pressable
+                style={[styles.filterChip, inviteRole === "PARENT" && styles.filterChipActive]}
+                onPress={() => setInviteRole("PARENT")}
+              >
+                <Text style={[styles.filterChipText, inviteRole === "PARENT" && styles.filterChipTextActive]}>Родител</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.filterChip, inviteRole === "CHILD" && styles.filterChipActive]}
+                onPress={() => setInviteRole("CHILD")}
+              >
+                <Text style={[styles.filterChipText, inviteRole === "CHILD" && styles.filterChipTextActive]}>Дете</Text>
+              </Pressable>
+            </View>
+            <Pressable
+              style={[styles.primaryBtn, (busy || !inviteEmail.trim()) && styles.disabled]}
+              onPress={onSendInvite}
+              disabled={busy || !inviteEmail.trim()}
+            >
+              <Text style={styles.primaryBtnText}>{busy ? "Изпращане..." : "Изпрати покана"}</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Text style={styles.emptyText}>Само родител може да изпраща покани.</Text>
+        )}
+
         {familyMembersWithLogged.map((member) => (
           <View key={member.id || `${member.email}-${member.role}`} style={styles.item}>
             <Text style={styles.itemTitle}>{member.firstName} {member.lastName}</Text>
@@ -391,7 +551,8 @@ export default function ModuleScreen({ route }) {
           </View>
         ))}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-      </View>
+        {info ? <Text style={styles.info}>{info}</Text> : null}
+      </ScrollView>
     );
   }
 
@@ -790,6 +951,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 2
   },
+  cardScrollContent: {
+    gap: 10,
+    paddingBottom: 8
+  },
   cardTitle: {
     fontSize: 17,
     fontWeight: "700",
@@ -854,6 +1019,14 @@ const styles = StyleSheet.create({
   itemMeta: {
     color: "#867868",
     fontSize: 11
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: "#d8cbba",
+    backgroundColor: "#f3ecdf"
   },
   emptyText: {
     color: "#8b7c6f",

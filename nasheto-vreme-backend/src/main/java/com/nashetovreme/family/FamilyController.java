@@ -4,6 +4,9 @@ import com.nashetovreme.family.dto.AddFamilyMemberRequest;
 import com.nashetovreme.family.dto.CreateFamilyRequest;
 import com.nashetovreme.family.dto.FamilyMemberResponse;
 import com.nashetovreme.family.dto.FamilyResponse;
+import com.nashetovreme.family.invite.FamilyInvitationService;
+import com.nashetovreme.family.invite.dto.CreateFamilyInvitationRequest;
+import com.nashetovreme.family.invite.dto.FamilyInvitationResponse;
 import com.nashetovreme.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class FamilyController {
 
     private final FamilyService familyService;
+    private final FamilyInvitationService familyInvitationService;
 
     @PostMapping
     public FamilyResponse createFamily(@Valid @RequestBody CreateFamilyRequest request,
@@ -46,6 +50,13 @@ public class FamilyController {
     public List<FamilyMemberResponse> listMembers(@PathVariable Long id,
                                                    @AuthenticationPrincipal AuthenticatedUser user) {
         return familyService.listMembers(id, user);
+    }
+
+    @PostMapping("/{id}/invitations")
+    public FamilyInvitationResponse inviteMember(@PathVariable Long id,
+                                                 @Valid @RequestBody CreateFamilyInvitationRequest request,
+                                                 @AuthenticationPrincipal AuthenticatedUser user) {
+        return familyInvitationService.createInvitation(id, request, user);
     }
 }
 
