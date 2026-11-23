@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,8 +25,8 @@ public class QuestionController {
     private final QuestionService questionService;
 
     @GetMapping("/questions/today")
-    public QuestionResponse getTodayQuestion() {
-        return questionService.getTodayQuestion();
+    public QuestionResponse getTodayQuestion(@RequestParam(required = false) String language) {
+        return questionService.getTodayQuestion(language);
     }
 
     @GetMapping("/questions")

@@ -37,8 +37,15 @@ public class QuestionService {
     }
 
     @Transactional(readOnly = true)
-    public QuestionResponse getTodayQuestion() {
-        List<Question> activeQuestions = questionRepository.findByActiveTrueOrderByIdAsc();
+    public QuestionResponse getTodayQuestion(String language) {
+        String normalizedLanguage = normalizeLanguage(language);
+        List<Question> activeQuestions = questionRepository.findByActiveTrueAndLanguageIgnoreCaseOrderByIdAsc(normalizedLanguage);
+        if (activeQuestions.isEmpty() && !"en".equals(normalizedLanguage)) {
+            activeQuestions = questionRepository.findByActiveTrueAndLanguageIgnoreCaseOrderByIdAsc("en");
+        }
+        if (activeQuestions.isEmpty()) {
+            activeQuestions = questionRepository.findByActiveTrueOrderByIdAsc();
+        }
         if (activeQuestions.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No active questions found");
         }
@@ -103,9 +110,27 @@ public class QuestionService {
                 question.getId(),
                 question.getTitle(),
                 question.getCategory(),
+                question.getLanguage(),
                 question.isActive(),
                 question.getCreatedAt()
         );
+    }
+
+    private String normalizeLanguage(String language) {
+        if (language == null || language.isBlank()) {
+            return "bg";
+        }
+
+        String normalized = language.trim().toLowerCase();
+        if (normalized.length() >= 2) {
+            normalized = normalized.substring(0, 2);
+        }
+
+        if (!"en".equals(normalized) && !"bg".equals(normalized)) {
+            return "bg";
+        }
+
+        return normalized;
     }
 
     private QuestionAnswerResponse toAnswerResponse(QuestionAnswer answer) {

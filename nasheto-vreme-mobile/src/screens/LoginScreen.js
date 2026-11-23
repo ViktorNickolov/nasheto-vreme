@@ -1,8 +1,28 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { loginMobile } from "../api/http";
+import { useAppLanguage } from "../config/language";
 
 export default function LoginScreen({ navigation }) {
+  const { appLanguage } = useAppLanguage();
+  const isEn = appLanguage === "en";
+  const labels = isEn
+    ? {
+        title: "Our Time",
+        subtitle: "A calm and natural place for your family.",
+        password: "Password",
+        loginFailed: "Login failed.",
+        login: "Login",
+        registerLink: "No account? Register"
+      }
+    : {
+        title: "Нашето време",
+        subtitle: "Естествено и спокойно място за вашето семейство.",
+        password: "Парола",
+        loginFailed: "Входът не бе успешен.",
+        login: "Вход",
+        registerLink: "Нямате профил? Регистрация"
+      };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,15 +33,15 @@ export default function LoginScreen({ navigation }) {
       await loginMobile({ email, password });
       navigation.replace("Home");
     } catch (err) {
-      setError(err.message || "Входът не бе успешен.");
+      setError(err.message || labels.loginFailed);
     }
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.authCard}>
-        <Text style={styles.title}>Нашето време</Text>
-        <Text style={styles.subtitle}>Естествено и спокойно място за вашето семейство.</Text>
+        <Text style={styles.title}>{labels.title}</Text>
+        <Text style={styles.subtitle}>{labels.subtitle}</Text>
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -32,7 +52,7 @@ export default function LoginScreen({ navigation }) {
         />
         <TextInput
           style={styles.input}
-          placeholder="Парола"
+          placeholder={labels.password}
           placeholderTextColor="#8b7f70"
           secureTextEntry
           value={password}
@@ -40,10 +60,10 @@ export default function LoginScreen({ navigation }) {
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Pressable style={styles.primaryBtn} onPress={onLogin}>
-          <Text style={styles.primaryBtnText}>Вход</Text>
+          <Text style={styles.primaryBtnText}>{labels.login}</Text>
         </Pressable>
         <Pressable onPress={() => navigation.navigate("Register")}>
-          <Text style={styles.link}>Нямате профил? Регистрация</Text>
+          <Text style={styles.link}>{labels.registerLink}</Text>
         </Pressable>
       </View>
     </View>

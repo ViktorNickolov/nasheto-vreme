@@ -153,8 +153,8 @@ export async function uploadProfileImageMobile(fileAsset, allowRetry = true) {
   return body;
 }
 
-export function getTodayQuestionMobile() {
-  return request("/questions/today");
+export function getTodayQuestionMobile(language = "bg") {
+  return request(`/questions/today?language=${encodeURIComponent(language)}`);
 }
 
 export function getFamilyAnswersMobile(familyId) {

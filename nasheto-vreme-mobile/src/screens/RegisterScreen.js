@@ -1,8 +1,32 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from "react-native";
 import { registerMobile } from "../api/http";
+import { useAppLanguage } from "../config/language";
 
 export default function RegisterScreen({ navigation }) {
+  const { appLanguage } = useAppLanguage();
+  const isEn = appLanguage === "en";
+  const labels = isEn
+    ? {
+        title: "Create profile",
+        subtitle: "Create a family space for your memories.",
+        password: "Password",
+        firstName: "First name",
+        lastName: "Last name",
+        family: "Family",
+        submit: "Register",
+        failed: "Registration failed."
+      }
+    : {
+        title: "Създай профил",
+        subtitle: "Направете семейно пространство за вашите спомени.",
+        password: "Парола",
+        firstName: "Име",
+        lastName: "Фамилия",
+        family: "Семейство",
+        submit: "Регистрация",
+        failed: "Регистрацията не бе успешна."
+      };
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -27,23 +51,23 @@ export default function RegisterScreen({ navigation }) {
       });
       navigation.replace("Home");
     } catch (err) {
-      setError(err.message || "Регистрацията не бе успешна.");
+      setError(err.message || labels.failed);
     }
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.formCard}>
-        <Text style={styles.title}>Създай профил</Text>
-        <Text style={styles.subtitle}>Направете семейно пространство за вашите спомени.</Text>
+        <Text style={styles.title}>{labels.title}</Text>
+        <Text style={styles.subtitle}>{labels.subtitle}</Text>
         <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#8b7f70" autoCapitalize="none" value={form.email} onChangeText={(v) => update("email", v)} />
-        <TextInput style={styles.input} placeholder="Парола" placeholderTextColor="#8b7f70" secureTextEntry value={form.password} onChangeText={(v) => update("password", v)} />
-        <TextInput style={styles.input} placeholder="Име" placeholderTextColor="#8b7f70" value={form.firstName} onChangeText={(v) => update("firstName", v)} />
-        <TextInput style={styles.input} placeholder="Фамилия" placeholderTextColor="#8b7f70" value={form.lastName} onChangeText={(v) => update("lastName", v)} />
-        <TextInput style={styles.input} placeholder="Семейство" placeholderTextColor="#8b7f70" value={form.familyName} onChangeText={(v) => update("familyName", v)} />
+        <TextInput style={styles.input} placeholder={labels.password} placeholderTextColor="#8b7f70" secureTextEntry value={form.password} onChangeText={(v) => update("password", v)} />
+        <TextInput style={styles.input} placeholder={labels.firstName} placeholderTextColor="#8b7f70" value={form.firstName} onChangeText={(v) => update("firstName", v)} />
+        <TextInput style={styles.input} placeholder={labels.lastName} placeholderTextColor="#8b7f70" value={form.lastName} onChangeText={(v) => update("lastName", v)} />
+        <TextInput style={styles.input} placeholder={labels.family} placeholderTextColor="#8b7f70" value={form.familyName} onChangeText={(v) => update("familyName", v)} />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Pressable style={styles.primaryBtn} onPress={onRegister}>
-          <Text style={styles.primaryBtnText}>Регистрация</Text>
+          <Text style={styles.primaryBtnText}>{labels.submit}</Text>
         </Pressable>
       </View>
     </ScrollView>

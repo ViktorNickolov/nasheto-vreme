@@ -38,43 +38,233 @@ const initialPdf = {
   includeAnswers: true
 };
 
-const dashboardModules = [
-  { key: "profile", label: "Моят профил" },
-  { key: "family", label: "Вашето семейство" },
-  { key: "question", label: "Въпрос на деня" },
-  { key: "moments", label: "Семейни моменти" },
-  { key: "timeline", label: "Семейна хроника" },
-  { key: "pdf", label: "Семейна PDF книга" }
-];
+const MODULE_KEYS = ["profile", "family", "question", "moments", "timeline", "pdf"];
+
+const dashboardLabels = {
+  bg: {
+    profile: "Моят профил",
+    family: "Вашето семейство",
+    question: "Въпрос на деня",
+    moments: "Семейни моменти",
+    timeline: "Семейна хроника",
+    pdf: "Семейна PDF книга"
+  },
+  en: {
+    profile: "My profile",
+    family: "Your family",
+    question: "Question of the day",
+    moments: "Family moments",
+    timeline: "Family timeline",
+    pdf: "Family PDF book"
+  }
+};
 
 const ACTIVE_MODULE_KEY = "nv_active_module";
+const QUESTION_LANG_KEY = "nv_question_lang";
 
-const sidebarHighlights = [
-  {
-    title: "Семейна искра",
-    text: "Спомените оживяват, когато ги споделяме заедно."
+const sidebarHighlights = {
+  bg: [
+    { title: "Семейна искра", text: "Спомените оживяват, когато ги споделяме заедно." },
+    { title: "Миг от днес", text: "Всяка снимка е малка врата към щастлив миг." },
+    { title: "Семейна история", text: "Семейството е история, която пишем всеки ден." },
+    { title: "Дневен акцент", text: "Днес е добър ден да запазим още един красив момент." },
+    { title: "Топла връзка", text: "Най-силните връзки се градят с внимание и време." }
+  ],
+  en: [
+    { title: "Family spark", text: "Memories come alive when we share them together." },
+    { title: "Moment of today", text: "Every photo is a small door to a happy moment." },
+    { title: "Family story", text: "Family is a story we write every day." },
+    { title: "Daily highlight", text: "Today is a good day to keep one more beautiful memory." },
+    { title: "Warm bond", text: "The strongest bonds grow with care and time." }
+  ]
+};
+
+const webText = {
+  bg: {
+    inviteOpened: "Отворихте покана за присъединяване към семейство.",
+    sessionExpired: "Сесията е изтекла. Моля, влезте отново.",
+    loginSuccess: "Успешен вход.",
+    registerSuccess: "Успешна регистрация. Таблото е заредено.",
+    profileNotLoaded: "Профилът не е зареден.",
+    loadQuestionFirst: "Първо заредете въпрос за деня.",
+    inviteSent: "Поканата е изпратена успешно.",
+    inviteNotSent: "Имейлът не е изпратен",
+    loggedOutInfo: "Излязохте успешно.",
+    loggedOutOutput: "Изходът е успешен.",
+    profileUpdated: "Профилът и семейните данни са обновени.",
+    pdfDownloaded: "PDF файлът е изтеглен.",
+    chooseProfilePhoto: "Изберете снимка за профила.",
+    profilePhotoUpdated: "Профилната снимка е обновена.",
+    profileHint: "Вашето лично пространство и семейна принадлежност.",
+    noProfilePhoto: "Няма профилна снимка.",
+    pickProfilePhoto: "Избери профилна снимка",
+    upload: "Качи",
+    user: "Потребител",
+    family: "Семейство",
+    status: "Статус",
+    activeSession: "Активна сесия",
+    inactiveSession: "Неактивна сесия",
+    createdBy: "Създадено от",
+    createdOn: "Създадено на",
+    noDataYet: "Все още няма данни.",
+    inviteEmailPlaceholder: "Email за покана",
+    role: "Роля",
+    parent: "Родител",
+    child: "Дете",
+    sendInvite: "Изпрати покана",
+    parentOnlyInvite: "Само родител може да изпраща покани.",
+    questionLoading: "Въпросът за деня се зарежда...",
+    yourAnswer: "Вашият отговор",
+    sendAnswer: "Изпрати отговор",
+    myAnswers: "Моите отговори",
+    noAnswersYet: "Все още нямате отговори.",
+    titlePlaceholder: "Заглавие",
+    descriptionPlaceholder: "Описание",
+    pickFile: "Избери файл",
+    attached: "Прикачена:",
+    addMoment: "Добави момент",
+    noMomentsYet: "Все още нямате добавени моменти.",
+    noDescription: "Няма описание",
+    allTypes: "Всички типове",
+    questions: "Въпроси",
+    moments: "Моменти",
+    from: "От",
+    to: "До",
+    clearDates: "Изчисти дати",
+    all: "Всички",
+    noTimelineForMember: "Няма записи за избрания член.",
+    noDetails: "Няма подробности",
+    period: "Период",
+    currentMonth: "Текущ месец",
+    currentYear: "Текуща година",
+    customRange: "Персонален избор",
+    style: "Стил",
+    familyStory: "Семейна история",
+    chronological: "Хронологичен",
+    highlights: "Акценти",
+    includeMoments: "Включи моменти",
+    includeAnswers: "Включи отговори",
+    preview: "Преглед",
+    download: "Свали",
+    downloadHint: "След генериране на преглед бутонът за изтегляне ще се появи тук.",
+    bootstrapping: "Възстановяване на сесия...",
+    appSubtitle: "Семейно пространство за спомени и разговори",
+    loginTab: "Вход",
+    registerTab: "Регистрация",
+    password: "Парола",
+    firstName: "Име",
+    lastName: "Фамилия",
+    familyName: "Име на семейство",
+    createProfile: "Създай профил",
+    loading: "Зареждане...",
+    appName: "Нашето време",
+    logout: "Изход",
+    welcome: "Добре дошли",
+    close: "Затвори",
+    previewAlt: "Преглед",
+    filePreviewTitle: "Преглед на файл",
+    memberFallback: "Семейство",
+    unknown: "UNKNOWN",
+    emailNotSentPrefix: "Имейлът не е изпратен"
   },
-  {
-    title: "Миг от днес",
-    text: "Всяка снимка е малка врата към щастлив миг."
-  },
-  {
-    title: "Семейна история",
-    text: "Семейството е история, която пишем всеки ден."
-  },
-  {
-    title: "Дневен акцент",
-    text: "Днес е добър ден да запазим още един красив момент."
-  },
-  {
-    title: "Топла връзка",
-    text: "Най-силните връзки се градят с внимание и време."
+  en: {
+    inviteOpened: "You opened a family invite link.",
+    sessionExpired: "Session expired. Please sign in again.",
+    loginSuccess: "Signed in successfully.",
+    registerSuccess: "Registration successful. Dashboard loaded.",
+    profileNotLoaded: "Profile is not loaded.",
+    loadQuestionFirst: "Load today's question first.",
+    inviteSent: "Invitation sent successfully.",
+    inviteNotSent: "Email was not sent",
+    loggedOutInfo: "Logged out successfully.",
+    loggedOutOutput: "Logout completed.",
+    profileUpdated: "Profile and family data were refreshed.",
+    pdfDownloaded: "PDF downloaded.",
+    chooseProfilePhoto: "Choose a profile photo.",
+    profilePhotoUpdated: "Profile photo updated.",
+    profileHint: "Your personal space and family context.",
+    noProfilePhoto: "No profile photo.",
+    pickProfilePhoto: "Choose profile photo",
+    upload: "Upload",
+    user: "User",
+    family: "Family",
+    status: "Status",
+    activeSession: "Active session",
+    inactiveSession: "Inactive session",
+    createdBy: "Created by",
+    createdOn: "Created on",
+    noDataYet: "No data yet.",
+    inviteEmailPlaceholder: "Invite email",
+    role: "Role",
+    parent: "Parent",
+    child: "Child",
+    sendInvite: "Send invite",
+    parentOnlyInvite: "Only a parent can send invites.",
+    questionLoading: "Loading today's question...",
+    yourAnswer: "Your answer",
+    sendAnswer: "Send answer",
+    myAnswers: "My answers",
+    noAnswersYet: "You have no answers yet.",
+    titlePlaceholder: "Title",
+    descriptionPlaceholder: "Description",
+    pickFile: "Choose file",
+    attached: "Attached:",
+    addMoment: "Add moment",
+    noMomentsYet: "You have no moments yet.",
+    noDescription: "No description",
+    allTypes: "All types",
+    questions: "Questions",
+    moments: "Moments",
+    from: "From",
+    to: "To",
+    clearDates: "Clear dates",
+    all: "All",
+    noTimelineForMember: "No records for the selected member.",
+    noDetails: "No details",
+    period: "Period",
+    currentMonth: "Current month",
+    currentYear: "Current year",
+    customRange: "Custom range",
+    style: "Style",
+    familyStory: "Family story",
+    chronological: "Chronological",
+    highlights: "Highlights",
+    includeMoments: "Include moments",
+    includeAnswers: "Include answers",
+    preview: "Preview",
+    download: "Download",
+    downloadHint: "After generating a preview, the download button will appear here.",
+    bootstrapping: "Restoring session...",
+    appSubtitle: "A family place for memories and conversations",
+    loginTab: "Login",
+    registerTab: "Register",
+    password: "Password",
+    firstName: "First name",
+    lastName: "Last name",
+    familyName: "Family name",
+    createProfile: "Create profile",
+    loading: "Loading...",
+    appName: "Our Time",
+    logout: "Logout",
+    welcome: "Welcome",
+    close: "Close",
+    previewAlt: "Preview",
+    filePreviewTitle: "File preview",
+    memberFallback: "Family",
+    unknown: "UNKNOWN",
+    emailNotSentPrefix: "Email was not sent"
   }
-];
+};
 
-function pickSidebarHighlight() {
-  const index = Math.floor(Math.random() * sidebarHighlights.length);
-  return sidebarHighlights[index];
+function getDashboardModules(language) {
+  const labels = dashboardLabels[language] || dashboardLabels.bg;
+  return MODULE_KEYS.map((key) => ({ key, label: labels[key] }));
+}
+
+function pickSidebarHighlight(language) {
+  const list = sidebarHighlights[language] || sidebarHighlights.bg;
+  const index = Math.floor(Math.random() * list.length);
+  return list[index];
 }
 
 function getInitialActiveModule() {
@@ -82,7 +272,7 @@ function getInitialActiveModule() {
     return "profile";
   }
   const saved = globalThis.sessionStorage.getItem(ACTIVE_MODULE_KEY);
-  if (saved && dashboardModules.some((module) => module.key === saved)) {
+  if (saved && MODULE_KEYS.includes(saved)) {
     return saved;
   }
   return "profile";
@@ -97,6 +287,25 @@ function readInviteContextFromUrl() {
     token: (params.get("inviteToken") || "").trim(),
     email: (params.get("inviteEmail") || "").trim()
   };
+}
+
+function detectQuestionLanguage() {
+  if (typeof navigator === "undefined") {
+    return "bg";
+  }
+  const locale = (navigator.language || "").toLowerCase();
+  return locale.startsWith("en") ? "en" : "bg";
+}
+
+function getInitialQuestionLanguage() {
+  if (typeof window === "undefined") {
+    return detectQuestionLanguage();
+  }
+  const saved = (window.localStorage.getItem(QUESTION_LANG_KEY) || "").toLowerCase();
+  if (saved === "bg" || saved === "en") {
+    return saved;
+  }
+  return detectQuestionLanguage();
 }
 
 export default function App() {
@@ -118,12 +327,12 @@ export default function App() {
   const [output, setOutput] = useState("Ready.");
   const [bootstrapping, setBootstrapping] = useState(true);
   const [activeModule, setActiveModule] = useState(() => getInitialActiveModule());
-  const [sidebarHighlight] = useState(() => pickSidebarHighlight());
   const [inviteContext] = useState(() => readInviteContextFromUrl());
   const [selectedTimelineMemberId, setSelectedTimelineMemberId] = useState("all");
   const [selectedTimelineType, setSelectedTimelineType] = useState("all");
   const [timelineDateFrom, setTimelineDateFrom] = useState("");
   const [timelineDateTo, setTimelineDateTo] = useState("");
+  const [questionLanguage, setQuestionLanguage] = useState(() => getInitialQuestionLanguage());
 
   const [loginForm, setLoginForm] = useState(initialLogin);
   const [registerForm, setRegisterForm] = useState(initialRegister);
@@ -136,13 +345,22 @@ export default function App() {
 
   const isLogged = Boolean(auth?.accessToken);
   const canInviteMembers = profile?.role === "PARENT";
+  const ui = useMemo(() => webText[questionLanguage] || webText.bg, [questionLanguage]);
+  const languageToggleLabel = questionLanguage === "bg" ? "EN" : "БГ";
+  const nextLanguage = questionLanguage === "bg" ? "en" : "bg";
+  const dashboardModules = useMemo(() => getDashboardModules(questionLanguage), [questionLanguage]);
+  const moduleLabelsByKey = useMemo(
+    () => Object.fromEntries(dashboardModules.map((module) => [module.key, module.label])),
+    [dashboardModules]
+  );
+  const sidebarHighlight = useMemo(() => pickSidebarHighlight(questionLanguage), [questionLanguage]);
 
   const profileInfo = useMemo(() => {
     if (!profile) {
-      return "Профилът не е зареден";
+      return ui.profileNotLoaded;
     }
-    return `${profile.firstName} ${profile.lastName} | ${profile.familyName || "Без семейство"}`;
-  }, [profile]);
+    return `${profile.firstName} ${profile.lastName} | ${profile.familyName || ui.family}`;
+  }, [profile, ui]);
 
   const ownAnswers = useMemo(() => {
     if (!profile) {
@@ -211,7 +429,7 @@ export default function App() {
     if (Number.isNaN(date.getTime())) {
       return value;
     }
-    return date.toLocaleString("bg-BG", {
+    return date.toLocaleString(questionLanguage === "en" ? "en-US" : "bg-BG", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -275,7 +493,7 @@ export default function App() {
           inviteToken: inviteContext.token,
           email: inviteContext.email || current.email
         }));
-        setAuthInfo("Отворихте покана за присъединяване към семейство.");
+        setAuthInfo(ui.inviteOpened);
         if (!cancelled) {
           setBootstrapping(false);
         }
@@ -343,7 +561,7 @@ export default function App() {
     clearAuth();
     setAuthState(null);
     resetDashboardState();
-    setAuthInfo("Сесията е изтекла. Моля, влезте отново.");
+    setAuthInfo(ui.sessionExpired);
     show({ error: error.message });
   }
 
@@ -421,10 +639,26 @@ export default function App() {
     return result;
   }
 
-  async function loadTodayQuestionData() {
-    const result = await getTodayQuestion();
+  async function loadTodayQuestionData(language = questionLanguage) {
+    const result = await getTodayQuestion(language);
     setTodayQuestion(result);
     return result;
+  }
+
+  async function selectQuestionLanguage(nextLanguage) {
+    if (nextLanguage === questionLanguage) {
+      return;
+    }
+    setQuestionLanguage(nextLanguage);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(QUESTION_LANG_KEY, nextLanguage);
+    }
+    if (!isLogged) {
+      return;
+    }
+    await withBusy(async () => {
+      await loadTodayQuestionData(nextLanguage);
+    });
   }
 
   async function refreshDashboardData() {
@@ -448,7 +682,7 @@ export default function App() {
       const result = await login(loginForm);
       setAuth(result);
       setAuthState(result);
-      setAuthInfo("Успешен вход.");
+      setAuthInfo(ui.loginSuccess);
       await refreshDashboardData();
       show(result);
     });
@@ -465,7 +699,7 @@ export default function App() {
       const result = await register(payload);
       setAuth(result);
       setAuthState(result);
-      setAuthInfo("Успешна регистрация. Таблото е заредено.");
+      setAuthInfo(ui.registerSuccess);
       await refreshDashboardData();
       show(result);
     });
@@ -475,7 +709,7 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-        throw new Error("Профилът не е зареден.");
+        throw new Error(ui.profileNotLoaded);
       }
 
       const response = await sendFamilyInvitation(Number(profile.familyId), {
@@ -485,9 +719,9 @@ export default function App() {
       setInviteForm(initialInvite);
       show(response);
       if (response?.deliveryStatus === "SENT") {
-        setAuthInfo("Поканата е изпратена успешно.");
+        setAuthInfo(ui.inviteSent);
       } else {
-        setAuthInfo(`Имейлът не е изпратен (${response?.deliveryStatus || "UNKNOWN"}). Използвайте линка ръчно: ${response?.inviteLink || "-"}`);
+        setAuthInfo(`${ui.emailNotSentPrefix} (${response?.deliveryStatus || ui.unknown}). ${response?.inviteLink || "-"}`);
       }
     }, { authSensitive: true });
   }
@@ -505,14 +739,14 @@ export default function App() {
     resetDashboardState();
     setActiveModule("profile");
     setTab("login");
-    setAuthInfo("Излязохте успешно.");
-    show("Изходът е успешен.");
+    setAuthInfo(ui.loggedOutInfo);
+    show(ui.loggedOutOutput);
   }
 
   async function onRefreshProfile() {
     await withBusy(async () => {
       await refreshDashboardData();
-      show("Профилът и семейните данни са обновени.");
+      show(ui.profileUpdated);
     }, { authSensitive: true });
   }
 
@@ -530,10 +764,10 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-          throw new Error("Профилът не е зареден.");
+          throw new Error(ui.profileNotLoaded);
       }
       if (!todayQuestion?.id) {
-          throw new Error("Първо заредете въпрос за деня.");
+          throw new Error(ui.loadQuestionFirst);
       }
 
       const result = await answerQuestion(Number(todayQuestion.id), {
@@ -550,7 +784,7 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-          throw new Error("Профилът не е зареден.");
+          throw new Error(ui.profileNotLoaded);
       }
 
       let resolvedImageUrl = momentForm.imageUrl;
@@ -577,7 +811,7 @@ export default function App() {
     event.preventDefault();
     await withBusy(async () => {
       if (!profile?.familyId) {
-          throw new Error("Профилът не е зареден.");
+          throw new Error(ui.profileNotLoaded);
       }
 
       const result = await createPdfPreview({
@@ -610,7 +844,7 @@ export default function App() {
   async function onDownloadPdf() {
     await withBusy(async () => {
       if (!profile?.familyId) {
-          throw new Error("Профилът не е зареден.");
+          throw new Error(ui.profileNotLoaded);
       }
 
       const result = await downloadPdfBook({
@@ -629,19 +863,19 @@ export default function App() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      show("PDF файлът е изтеглен.");
+      show(ui.pdfDownloaded);
     }, { authSensitive: true });
   }
 
   async function onUploadProfilePhoto() {
     await withBusy(async () => {
       if (!profileUploadFile) {
-        throw new Error("Изберете снимка за профила.");
+        throw new Error(ui.chooseProfilePhoto);
       }
       const updatedProfile = await uploadProfileImage(profileUploadFile);
       setProfile(updatedProfile);
       setProfileUploadFile(null);
-      show("Профилната снимка е обновена.");
+      show(ui.profilePhotoUpdated);
     }, { authSensitive: true });
   }
 
@@ -649,12 +883,12 @@ export default function App() {
     if (activeModule === "profile") {
       return (
         <section className="card">
-          <h3>Моят профил</h3>
-          <p className="small-muted module-note">Вашето лично пространство и семейна принадлежност.</p>
+          <h3>{moduleLabelsByKey.profile || "Моят профил"}</h3>
+          <p className="small-muted module-note">{ui.profileHint}</p>
           {profile?.profileImageUrl ? (
             <ProfileImagePreview filePath={profile.profileImageUrl} />
           ) : (
-            <p className="small-muted">Няма профилна снимка.</p>
+            <p className="small-muted">{ui.noProfilePhoto}</p>
           )}
           <div className="upload-inline profile-upload-inline">
             <input
@@ -664,15 +898,15 @@ export default function App() {
               accept="image/*"
               onChange={(event) => setProfileUploadFile(event.target.files?.[0] || null)}
             />
-            <label htmlFor="profileImageInput" className="file-trigger">Избери профилна снимка</label>
+            <label htmlFor="profileImageInput" className="file-trigger">{ui.pickProfilePhoto}</label>
             {profileUploadFile ? <span className="attached-file">{profileUploadFile.name}</span> : null}
-            <button type="button" onClick={onUploadProfilePhoto} disabled={!profileUploadFile || busy}>Качи</button>
+            <button type="button" onClick={onUploadProfilePhoto} disabled={!profileUploadFile || busy}>{ui.upload}</button>
           </div>
           <div className="info-grid" id="profileCard">
-            <InfoItem label="Потребител" value={profile ? `${profile.firstName} ${profile.lastName}` : "-"} />
+            <InfoItem label={ui.user} value={profile ? `${profile.firstName} ${profile.lastName}` : "-"} />
             <InfoItem label="Email" value={profile?.email || "-"} />
-            <InfoItem label="Семейство" value={profile?.familyName || family?.name || "-"} />
-            <InfoItem label="Статус" value={auth?.accessToken ? "Активна сесия" : "Неактивна сесия"} />
+            <InfoItem label={ui.family} value={profile?.familyName || family?.name || "-"} />
+            <InfoItem label={ui.status} value={auth?.accessToken ? ui.activeSession : ui.inactiveSession} />
           </div>
         </section>
       );
@@ -682,15 +916,15 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>Вашето семейство</h3>
+            <h3>{moduleLabelsByKey.family || "Вашето семейство"}</h3>
           </div>
           <div className="info-grid" id="familyCard">
-            <InfoItem label="Семейство" value={family?.name || "-"} />
-            <InfoItem label="Създадено от" value={resolveCreatedByName(family?.createdBy)} />
-            <InfoItem label="Създадено на" value={formatDate(family?.createdAt)} />
+            <InfoItem label={ui.family} value={family?.name || "-"} />
+            <InfoItem label={ui.createdBy} value={resolveCreatedByName(family?.createdBy)} />
+            <InfoItem label={ui.createdOn} value={formatDate(family?.createdAt)} />
           </div>
           <div className="list" id="membersList">
-            {familyMembersWithLogged.length === 0 ? <p className="small-muted">Все още няма данни.</p> : familyMembersWithLogged.map((member) => (
+            {familyMembersWithLogged.length === 0 ? <p className="small-muted">{ui.noDataYet}</p> : familyMembersWithLogged.map((member) => (
               <article className="list-item" key={member.id || `${member.email}-${member.role}`}>
                 <h4>{member.firstName} {member.lastName}</h4>
                 <div className="list-meta">{member.role} | {member.email}</div>
@@ -702,22 +936,22 @@ export default function App() {
               <input
                 name="email"
                 type="email"
-                placeholder="Email за покана"
+                placeholder={ui.inviteEmailPlaceholder}
                 value={inviteForm.email}
                 onChange={updateForm(setInviteForm)}
                 required
               />
               <label className="select-filter">
-                Роля
+                {ui.role}
                 <select name="role" value={inviteForm.role} onChange={updateForm(setInviteForm)}>
-                  <option value="PARENT">Родител</option>
-                  <option value="CHILD">Дете</option>
+                  <option value="PARENT">{ui.parent}</option>
+                  <option value="CHILD">{ui.child}</option>
                 </select>
               </label>
-              <button type="submit">Изпрати покана</button>
+              <button type="submit">{ui.sendInvite}</button>
             </form>
           ) : (
-            <p className="small-muted">Само родител може да изпраща покани.</p>
+            <p className="small-muted">{ui.parentOnlyInvite}</p>
           )}
         </section>
       );
@@ -727,24 +961,24 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>Въпрос на деня</h3>
+            <h3>{moduleLabelsByKey.question || "Въпрос на деня"}</h3>
           </div>
           <p className="question-box" id="todayQuestionText">
-            {todayQuestion ? todayQuestion.title : "Въпросът за деня се зарежда..."}
+            {todayQuestion ? todayQuestion.title : ui.questionLoading}
           </p>
           <form className="grid2" id="answerForm" onSubmit={submitAnswer}>
-            <input name="answerText" type="text" placeholder="Вашият отговор" value={answerForm.answerText} onChange={updateForm(setAnswerForm)} required />
-            <button type="submit">Изпрати отговор</button>
+            <input name="answerText" type="text" placeholder={ui.yourAnswer} value={answerForm.answerText} onChange={updateForm(setAnswerForm)} required />
+            <button type="submit">{ui.sendAnswer}</button>
           </form>
           <div className="cardhead compact">
-            <h3>Моите отговори</h3>
+            <h3>{ui.myAnswers}</h3>
           </div>
           <div className="list" id="answersList">
-            {ownAnswers.length === 0 ? <p className="small-muted">Все още нямате отговори.</p> : ownAnswers.map((answer) => (
+            {ownAnswers.length === 0 ? <p className="small-muted">{ui.noAnswersYet}</p> : ownAnswers.map((answer) => (
               <article className="list-item" key={answer.id || `${answer.authorName}-${answer.createdAt}`}>
                 <h4>{answer.questionTitle}</h4>
                 <p>{answer.answerText}</p>
-                <div className="list-meta">{answer.authorName || "Семейство"} | {formatDate(answer.createdAt)}</div>
+                <div className="list-meta">{answer.authorName || ui.memberFallback} | {formatDate(answer.createdAt)}</div>
               </article>
             ))}
           </div>
@@ -756,11 +990,11 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>Семейни моменти</h3>
+            <h3>{moduleLabelsByKey.moments || "Семейни моменти"}</h3>
           </div>
           <form className="grid2" id="createMomentForm" onSubmit={submitMoment}>
-            <input name="title" type="text" placeholder="Заглавие" value={momentForm.title} onChange={updateForm(setMomentForm)} required />
-            <input name="description" type="text" placeholder="Описание" value={momentForm.description} onChange={updateForm(setMomentForm)} />
+            <input name="title" type="text" placeholder={ui.titlePlaceholder} value={momentForm.title} onChange={updateForm(setMomentForm)} required />
+            <input name="description" type="text" placeholder={ui.descriptionPlaceholder} value={momentForm.description} onChange={updateForm(setMomentForm)} />
             <div className="upload-inline" id="uploadForm">
               <input
                 id="uploadFileInput"
@@ -769,19 +1003,19 @@ export default function App() {
                 type="file"
                 onChange={(event) => setUploadFile(event.target.files?.[0] || null)}
               />
-              <label htmlFor="uploadFileInput" className="file-trigger">Избери файл</label>
-              {uploadFile ? <span className="attached-file">Прикачена: {uploadFile.name}</span> : null}
-              <button type="submit">Добави момент</button>
+              <label htmlFor="uploadFileInput" className="file-trigger">{ui.pickFile}</label>
+              {uploadFile ? <span className="attached-file">{ui.attached} {uploadFile.name}</span> : null}
+              <button type="submit">{ui.addMoment}</button>
             </div>
           </form>
           <span id="uploadResult" className="hidden" aria-hidden="true"></span>
           <div className="list" id="momentsList">
-            {ownMoments.length === 0 ? <p className="small-muted">Все още нямате добавени моменти.</p> : ownMoments.map((moment) => (
+            {ownMoments.length === 0 ? <p className="small-muted">{ui.noMomentsYet}</p> : ownMoments.map((moment) => (
               <article className="list-item" key={moment.id || `${moment.title}-${moment.createdAt}`}>
                 <h4>{moment.title}</h4>
-                {moment.imageUrl ? <AttachmentPreview filePath={moment.imageUrl} /> : null}
-                <p>{moment.description || "Няма описание"}</p>
-                <div className="list-meta">{moment.authorName || "Семейство"} | {formatDate(moment.createdAt)}</div>
+                {moment.imageUrl ? <AttachmentPreview filePath={moment.imageUrl} language={questionLanguage} /> : null}
+                <p>{moment.description || ui.noDescription}</p>
+                <div className="list-meta">{moment.authorName || ui.memberFallback} | {formatDate(moment.createdAt)}</div>
               </article>
             ))}
           </div>
@@ -793,7 +1027,7 @@ export default function App() {
       return (
         <section className="card">
           <div className="cardhead">
-            <h3>Семейна хроника</h3>
+            <h3>{moduleLabelsByKey.timeline || "Семейна хроника"}</h3>
           </div>
           <div className="timeline-filters" id="timelineFilters">
             <button
@@ -801,30 +1035,30 @@ export default function App() {
               type="button"
               onClick={() => setSelectedTimelineType("all")}
             >
-              Всички типове
+              {ui.allTypes}
             </button>
             <button
               className={selectedTimelineType === "question" ? "timeline-filter-chip active" : "timeline-filter-chip"}
               type="button"
               onClick={() => setSelectedTimelineType("question")}
             >
-              Въпроси
+              {ui.questions}
             </button>
             <button
               className={selectedTimelineType === "moment" ? "timeline-filter-chip active" : "timeline-filter-chip"}
               type="button"
               onClick={() => setSelectedTimelineType("moment")}
             >
-              Моменти
+              {ui.moments}
             </button>
           </div>
           <div className="timeline-filters timeline-date-filters">
             <label className="timeline-date-input">
-              От
+              {ui.from}
               <input type="date" value={timelineDateFrom} onChange={(event) => setTimelineDateFrom(event.target.value)} />
             </label>
             <label className="timeline-date-input">
-              До
+              {ui.to}
               <input type="date" value={timelineDateTo} onChange={(event) => setTimelineDateTo(event.target.value)} />
             </label>
             <button
@@ -835,7 +1069,7 @@ export default function App() {
                 setTimelineDateTo("");
               }}
             >
-              Изчисти дати
+              {ui.clearDates}
             </button>
           </div>
           <div className="timeline-filters">
@@ -844,7 +1078,7 @@ export default function App() {
               type="button"
               onClick={() => setSelectedTimelineMemberId("all")}
             >
-              Всички
+              {ui.all}
             </button>
             {members.map((member) => {
               const memberId = String(member.userId);
@@ -862,12 +1096,12 @@ export default function App() {
             })}
           </div>
           <div className="list" id="timelineList">
-            {filteredTimeline.length === 0 ? <p className="small-muted">Няма записи за избрания член.</p> : filteredTimeline.map((item) => (
+            {filteredTimeline.length === 0 ? <p className="small-muted">{ui.noTimelineForMember}</p> : filteredTimeline.map((item) => (
               <article className="list-item" key={item.id || `${item.type}-${item.createdAt}-${item.title}`}>
                 <h4>{item.type} | {item.title}</h4>
-                {item.imageUrl ? <AttachmentPreview filePath={item.imageUrl} /> : null}
-                <p>{item.details || "Няма подробности"}</p>
-                <div className="list-meta">{item.author || "Семейство"} | {formatDate(item.createdAt)}</div>
+                {item.imageUrl ? <AttachmentPreview filePath={item.imageUrl} language={questionLanguage} /> : null}
+                <p>{item.details || ui.noDetails}</p>
+                <div className="list-meta">{item.author || ui.memberFallback} | {formatDate(item.createdAt)}</div>
               </article>
             ))}
           </div>
@@ -877,44 +1111,44 @@ export default function App() {
 
     return (
       <section className="card">
-        <h3>Семейна PDF книга (преглед)</h3>
+        <h3>{`${moduleLabelsByKey.pdf || "Семейна PDF книга"}${questionLanguage === "en" ? " (preview)" : " (преглед)"}`}</h3>
         <form className="grid2" id="pdfExportForm" onSubmit={submitPdfPreview}>
           <label className="select-filter">
-            Период
+            {ui.period}
             <select name="period" value={pdfForm.period} onChange={updateForm(setPdfForm)}>
-              <option value="monthly">Текущ месец</option>
-              <option value="yearly">Текуща година</option>
-              <option value="custom">Персонален избор</option>
+              <option value="monthly">{ui.currentMonth}</option>
+              <option value="yearly">{ui.currentYear}</option>
+              <option value="custom">{ui.customRange}</option>
             </select>
           </label>
           <label className="select-filter">
-            Стил
+            {ui.style}
             <select name="style" value={pdfForm.style} onChange={updateForm(setPdfForm)}>
-              <option value="family-story">Семейна история</option>
-              <option value="timeline">Хронологичен</option>
-              <option value="highlights">Акценти</option>
+              <option value="family-story">{ui.familyStory}</option>
+              <option value="timeline">{ui.chronological}</option>
+              <option value="highlights">{ui.highlights}</option>
             </select>
           </label>
           <label className="check-filter">
-            <input name="includeMoments" type="checkbox" checked={pdfForm.includeMoments} onChange={updateForm(setPdfForm)} /> Включи моменти
+            <input name="includeMoments" type="checkbox" checked={pdfForm.includeMoments} onChange={updateForm(setPdfForm)} /> {ui.includeMoments}
           </label>
           <label className="check-filter">
-            <input name="includeAnswers" type="checkbox" checked={pdfForm.includeAnswers} onChange={updateForm(setPdfForm)} /> Включи отговори
+            <input name="includeAnswers" type="checkbox" checked={pdfForm.includeAnswers} onChange={updateForm(setPdfForm)} /> {ui.includeAnswers}
           </label>
-          {!pdfPreviewUrl ? <button type="submit">Преглед</button> : null}
+          {!pdfPreviewUrl ? <button type="submit">{ui.preview}</button> : null}
         </form>
         {pdfPreviewUrl ? (
-          <button id="downloadPdfBtn" type="button" onClick={onDownloadPdf}>Свали</button>
+          <button id="downloadPdfBtn" type="button" onClick={onDownloadPdf}>{ui.download}</button>
         ) : (
-          <p className="small-muted">След генериране на преглед бутонът за изтегляне ще се появи тук.</p>
+          <p className="small-muted">{ui.downloadHint}</p>
         )}
         {pdfPreviewUrl ? (
           <div className="info-grid" id="pdfPreviewCard">
-            <InfoItem label="Статус" value={pdfPreview?.status || "-"} />
-            <InfoItem label="Период" value={pdfPreview?.period || "-"} />
-            <InfoItem label="Стил" value={pdfPreview?.style || "-"} />
-            <InfoItem label="Моменти" value={pdfPreview?.includedMoments ?? "-"} />
-            <InfoItem label="Отговори" value={pdfPreview?.includedAnswers ?? "-"} />
+            <InfoItem label={ui.status} value={pdfPreview?.status || "-"} />
+            <InfoItem label={ui.period} value={pdfPreview?.period || "-"} />
+            <InfoItem label={ui.style} value={pdfPreview?.style || "-"} />
+            <InfoItem label={ui.moments} value={pdfPreview?.includedMoments ?? "-"} />
+            <InfoItem label={ui.myAnswers} value={pdfPreview?.includedAnswers ?? "-"} />
           </div>
         ) : null}
         {pdfPreviewUrl ? (
@@ -933,53 +1167,63 @@ export default function App() {
       {bootstrapping ? (
         <section className="auth-screen">
           <div className="auth-card">
-            <p className="small-muted">Възстановяване на сесия...</p>
+            <p className="small-muted">{ui.bootstrapping}</p>
           </div>
         </section>
       ) : null}
       {!bootstrapping && !isLogged ? (
         <section className="auth-screen" id="authScreen">
           <div className="auth-card">
+            <div className="auth-language-row">
+              <button
+                type="button"
+                className="language-toggle-btn"
+                id="appLanguageToggleAuth"
+                onClick={() => selectQuestionLanguage(nextLanguage)}
+              >
+                {languageToggleLabel}
+              </button>
+            </div>
             <div className="brand-row">
-                <div className="brand-mark app-logo" aria-label="Лого на приложението"></div>
+                <div className="brand-mark app-logo" aria-label={ui.appName}></div>
               <div>
-                  <h1>Нашето време</h1>
-                  <p className="small-muted">Семейно пространство за спомени и разговори</p>
+                  <h1>{ui.appName}</h1>
+                  <p className="small-muted">{ui.appSubtitle}</p>
               </div>
             </div>
 
             <div className="auth-tabs">
               <button className={tab === "login" ? "active" : ""} id="showLoginBtn" type="button" onClick={() => setTab("login")}>
-                Вход
+                {ui.loginTab}
               </button>
               <button className={tab === "register" ? "active" : ""} id="showRegisterBtn" type="button" onClick={() => setTab("register")}>
-                Регистрация
+                {ui.registerTab}
               </button>
             </div>
 
             {tab === "login" ? (
               <form className="auth-form" id="loginForm" onSubmit={submitLogin}>
                 <input name="email" type="email" placeholder="Email" value={loginForm.email} onChange={updateForm(setLoginForm)} required />
-                <input name="password" type="password" placeholder="Парола" value={loginForm.password} onChange={updateForm(setLoginForm)} required />
-                <button disabled={busy} type="submit">{busy ? "Зареждане..." : "Вход"}</button>
+                <input name="password" type="password" placeholder={ui.password} value={loginForm.password} onChange={updateForm(setLoginForm)} required />
+                <button disabled={busy} type="submit">{busy ? ui.loading : ui.loginTab}</button>
               </form>
             ) : (
               <form className="auth-form" id="registerForm" onSubmit={submitRegister}>
                 <input name="email" type="email" placeholder="Email" value={registerForm.email} onChange={updateForm(setRegisterForm)} required />
-                <input name="password" type="password" placeholder="Парола" value={registerForm.password} onChange={updateForm(setRegisterForm)} required />
-                <input name="firstName" type="text" placeholder="Име" value={registerForm.firstName} onChange={updateForm(setRegisterForm)} required />
-                <input name="lastName" type="text" placeholder="Фамилия" value={registerForm.lastName} onChange={updateForm(setRegisterForm)} required />
+                <input name="password" type="password" placeholder={ui.password} value={registerForm.password} onChange={updateForm(setRegisterForm)} required />
+                <input name="firstName" type="text" placeholder={ui.firstName} value={registerForm.firstName} onChange={updateForm(setRegisterForm)} required />
+                <input name="lastName" type="text" placeholder={ui.lastName} value={registerForm.lastName} onChange={updateForm(setRegisterForm)} required />
                 {!registerForm.inviteToken?.trim() ? (
                   <input
                     name="familyName"
                     type="text"
-                    placeholder="Име на семейство"
+                    placeholder={ui.familyName}
                     value={registerForm.familyName}
                     onChange={updateForm(setRegisterForm)}
                     required
                   />
                 ) : null}
-                <button disabled={busy} type="submit">{busy ? "Зареждане..." : "Създай профил"}</button>
+                <button disabled={busy} type="submit">{busy ? ui.loading : ui.createProfile}</button>
               </form>
             )}
 
@@ -992,10 +1236,10 @@ export default function App() {
           <aside className="sidebar">
             <div className="user-meta">
               <div className="brand-row brand-row-side">
-                <div className="brand-mark app-logo" aria-label="Лого на приложението"></div>
-                <p className="brand-side-title">Нашето време</p>
+                <div className="brand-mark app-logo" aria-label={ui.appName}></div>
+                <p className="brand-side-title">{ui.appName}</p>
               </div>
-              <button id="logoutBtn" className="secondary logout-btn" type="button" onClick={logout}>Изход</button>
+              <button id="logoutBtn" className="secondary logout-btn" type="button" onClick={logout}>{ui.logout}</button>
             </div>
 
             <section className="sidebar-card module-card">
@@ -1027,8 +1271,20 @@ export default function App() {
 
           <main className="main-content">
             <div className="topbar">
-              <h2>{dashboardModules.find((module) => module.key === activeModule)?.label || "Добре дошли"}</h2>
-              <p className="small-muted">{profileInfo}</p>
+              <h2>{dashboardModules.find((module) => module.key === activeModule)?.label || ui.welcome}</h2>
+              <div className="topbar-meta">
+                <div className="row app-language-switch" id="questionLanguageSwitch">
+                  <button
+                    type="button"
+                    className="language-toggle-btn"
+                    id="appLanguageToggle"
+                    onClick={() => selectQuestionLanguage(nextLanguage)}
+                  >
+                    {languageToggleLabel}
+                  </button>
+                </div>
+                <p className="small-muted">{profileInfo}</p>
+              </div>
             </div>
             {renderActiveModule()}
 
@@ -1049,7 +1305,10 @@ function InfoItem({ label, value }) {
   );
 }
 
-function AttachmentPreview({ filePath }) {
+function AttachmentPreview({ filePath, language = "bg" }) {
+  const labels = language === "en"
+    ? { view: "View", download: "Download", close: "Close", previewTitle: "File preview", previewAlt: "Preview" }
+    : { view: "Виж", download: "Свали", close: "Затвори", previewTitle: "Преглед на файл", previewAlt: "Преглед" };
   const [fileHref, setFileHref] = useState("");
   const [contentType, setContentType] = useState("");
   const [downloadName, setDownloadName] = useState("attachment");
@@ -1128,17 +1387,17 @@ function AttachmentPreview({ filePath }) {
     return (
       <>
         <div className="timeline-file-actions">
-          <button className="timeline-link-button" type="button" onClick={() => setIsPreviewOpen(true)}>Виж</button>
-          <a className="timeline-download-link" href={fileHref} download={downloadName}>Свали</a>
+          <button className="timeline-link-button" type="button" onClick={() => setIsPreviewOpen(true)}>{labels.view}</button>
+          <a className="timeline-download-link" href={fileHref} download={downloadName}>{labels.download}</a>
         </div>
         {isPreviewOpen ? (
           <div className="attachment-modal-backdrop" onClick={() => setIsPreviewOpen(false)} role="presentation">
             <div className="attachment-modal" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
-              <button className="attachment-modal-close" type="button" onClick={() => setIsPreviewOpen(false)}>Затвори</button>
+              <button className="attachment-modal-close" type="button" onClick={() => setIsPreviewOpen(false)}>{labels.close}</button>
               {isImage ? (
-                <img className="attachment-modal-image" src={fileHref} alt="Преглед" />
+                <img className="attachment-modal-image" src={fileHref} alt={labels.previewAlt} />
               ) : (
-                <iframe className="attachment-modal-frame" src={fileHref} title="Преглед на файл" />
+                <iframe className="attachment-modal-frame" src={fileHref} title={labels.previewTitle} />
               )}
             </div>
           </div>
@@ -1268,7 +1527,7 @@ function isWithinDateRange(value, fromDate, toDate) {
 }
 
 function resolveMemberName(member) {
-  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || "Член";
+  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || "Member";
 }
 
 function normalizeName(value) {

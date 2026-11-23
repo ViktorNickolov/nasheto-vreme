@@ -175,8 +175,8 @@ export function me() {
   return api("/auth/me");
 }
 
-export function getTodayQuestion() {
-  return api("/questions/today");
+export function getTodayQuestion(language = "bg") {
+  return api(`/questions/today?language=${encodeURIComponent(language)}`);
 }
 
 export function getFamily(familyId) {

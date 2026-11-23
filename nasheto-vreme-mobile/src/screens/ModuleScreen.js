@@ -22,6 +22,7 @@ import {
   uploadProfileImageMobile,
   uploadFamilyFileMobile
 } from "../api/http";
+import { useAppLanguage } from "../config/language";
 
 const initialPdfForm = {
   period: "monthly",
@@ -31,6 +32,7 @@ const initialPdfForm = {
 };
 
 export default function ModuleScreen({ route }) {
+  const { appLanguage } = useAppLanguage();
   const moduleKey = route?.params?.moduleKey || "profile";
   const sessionUser = getSessionUser();
 
@@ -63,6 +65,159 @@ export default function ModuleScreen({ route }) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const canInviteMembers = profile?.role === "PARENT";
+  const questionLanguage = appLanguage === "en" ? "en" : "bg";
+  const moduleTitles = questionLanguage === "en"
+    ? {
+        profile: "My profile",
+        family: "Your family",
+        question: "Question of the day",
+        moments: "Family moments",
+        timeline: "Family timeline",
+        pdf: "Family PDF book"
+      }
+    : {
+        profile: "Моят профил",
+        family: "Вашето семейство",
+        question: "Въпрос на деня",
+        moments: "Семейни моменти",
+        timeline: "Семейна хроника",
+        pdf: "Семейна PDF книга"
+      };
+  const text = questionLanguage === "en"
+    ? {
+        loadFailed: "Failed to load data.",
+        answerSent: "Answer submitted successfully.",
+        answerFailed: "Failed to submit answer.",
+        fileSelected: "Selected file",
+        profilePhotoSelected: "Selected profile photo",
+        profilePhotoUpdated: "Profile photo updated.",
+        profilePhotoUploadFailed: "Profile photo upload failed.",
+        momentAdded: "Moment added successfully.",
+        momentCreateFailed: "Failed to create moment.",
+        inviteSent: "Invite sent successfully.",
+        inviteSendFailed: "Failed to send invite.",
+        emailNotSent: "Email was not sent",
+        fileSaved: "File saved",
+        fileOpenFailed: "Failed to open file.",
+        pdfPreviewGenerated: "PDF preview generated.",
+        pdfPreviewFailed: "Failed to generate PDF preview.",
+        pdfSaved: "PDF file saved",
+        pdfReady: "PDF is ready to share/download.",
+        pdfDownloadFailed: "Failed to download PDF.",
+        view: "View",
+        download: "Download",
+        noProfilePhoto: "No profile photo.",
+        chooseProfilePhoto: "Choose profile photo",
+        uploading: "Uploading...",
+        uploadPhoto: "Upload photo",
+        user: "User",
+        family: "Family",
+        name: "Name",
+        members: "Members",
+        inviteEmail: "Invite email",
+        parent: "Parent",
+        child: "Child",
+        sending: "Sending...",
+        sendInvite: "Send invite",
+        parentOnlyInvite: "Only a parent can send invites.",
+        loading: "Loading...",
+        noQuestion: "No question available today.",
+        yourAnswer: "Your answer",
+        sendAnswer: "Send answer",
+        questionFallback: "Question",
+        noAnswers: "You have no answers yet.",
+        title: "Title",
+        description: "Description",
+        attachFile: "Attach file",
+        adding: "Adding...",
+        addMoment: "Add moment",
+        noDescription: "No description",
+        noMoments: "You have no moments yet.",
+        allTypes: "All types",
+        questions: "Questions",
+        moments: "Moments",
+        dateFrom: "From (YYYY-MM-DD)",
+        dateTo: "To (YYYY-MM-DD)",
+        clearDates: "Clear dates",
+        all: "All",
+        noDetails: "No details",
+        noTimeline: "No records for selected member.",
+        includeMoments: "Include moments",
+        includeAnswers: "Include answers",
+        generatePreview: "Generate preview",
+        downloadPdf: "Download PDF",
+        status: "Status",
+        period: "Period",
+        style: "Style",
+        memberFallback: "Member"
+      }
+    : {
+        loadFailed: "Неуспешно зареждане на данните.",
+        answerSent: "Отговорът е изпратен успешно.",
+        answerFailed: "Неуспешно изпращане на отговора.",
+        fileSelected: "Избран файл",
+        profilePhotoSelected: "Избрана профилна снимка",
+        profilePhotoUpdated: "Профилната снимка е обновена.",
+        profilePhotoUploadFailed: "Неуспешно качване на профилна снимка.",
+        momentAdded: "Моментът е добавен успешно.",
+        momentCreateFailed: "Неуспешно създаване на момент.",
+        inviteSent: "Поканата е изпратена успешно.",
+        inviteSendFailed: "Неуспешно изпращане на поканата.",
+        emailNotSent: "Имейлът не е изпратен",
+        fileSaved: "Файлът е запазен",
+        fileOpenFailed: "Неуспешно отваряне на файла.",
+        pdfPreviewGenerated: "PDF прегледът е генериран.",
+        pdfPreviewFailed: "Неуспешно генериране на PDF преглед.",
+        pdfSaved: "PDF файлът е запазен",
+        pdfReady: "PDF файлът е готов за споделяне/сваляне.",
+        pdfDownloadFailed: "Неуспешно изтегляне на PDF.",
+        view: "Виж",
+        download: "Свали",
+        noProfilePhoto: "Няма профилна снимка.",
+        chooseProfilePhoto: "Избери профилна снимка",
+        uploading: "Качване...",
+        uploadPhoto: "Качи снимка",
+        user: "Потребител",
+        family: "Семейство",
+        name: "Име",
+        members: "Членове",
+        inviteEmail: "Email за покана",
+        parent: "Родител",
+        child: "Дете",
+        sending: "Изпращане...",
+        sendInvite: "Изпрати покана",
+        parentOnlyInvite: "Само родител може да изпраща покани.",
+        loading: "Зареждане...",
+        noQuestion: "Няма наличен въпрос за деня.",
+        yourAnswer: "Вашият отговор",
+        sendAnswer: "Изпрати отговор",
+        questionFallback: "Въпрос",
+        noAnswers: "Все още нямате отговори.",
+        title: "Заглавие",
+        description: "Описание",
+        attachFile: "Прикачи файл",
+        adding: "Добавяне...",
+        addMoment: "Добави момент",
+        noDescription: "Няма описание",
+        noMoments: "Все още нямате добавени моменти.",
+        allTypes: "Всички типове",
+        questions: "Въпроси",
+        moments: "Моменти",
+        dateFrom: "От (YYYY-MM-DD)",
+        dateTo: "До (YYYY-MM-DD)",
+        clearDates: "Изчисти дати",
+        all: "Всички",
+        noDetails: "Няма подробности",
+        noTimeline: "Няма записи за избрания член.",
+        includeMoments: "Включи моменти",
+        includeAnswers: "Включи отговори",
+        generatePreview: "Генерирай преглед",
+        downloadPdf: "Свали PDF",
+        status: "Статус",
+        period: "Период",
+        style: "Стил",
+        memberFallback: "Член"
+      };
 
   const familyId = useMemo(() => profile?.familyId, [profile]);
   const filteredAnswers = useMemo(() => {
@@ -138,7 +293,7 @@ export default function ModuleScreen({ route }) {
           const [loadedFamily, loadedMembers, loadedQuestion, loadedAnswers, loadedMoments, loadedTimeline] = await Promise.all([
             getFamilyMobile(loadedProfile.familyId),
             getFamilyMembersMobile(loadedProfile.familyId),
-            getTodayQuestionMobile(),
+            getTodayQuestionMobile(questionLanguage),
             getFamilyAnswersMobile(loadedProfile.familyId),
             listMomentsMobile(loadedProfile.familyId),
             getTimelineMobile(loadedProfile.familyId)
@@ -157,7 +312,7 @@ export default function ModuleScreen({ route }) {
         }
       } catch (err) {
         if (mounted) {
-          setError(err.message || "Неуспешно зареждане на данните.");
+          setError(err.message || text.loadFailed);
         }
       } finally {
         if (mounted) {
@@ -170,7 +325,7 @@ export default function ModuleScreen({ route }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [questionLanguage]);
 
   useEffect(() => {
     let active = true;
@@ -229,9 +384,9 @@ export default function ModuleScreen({ route }) {
       setAnswers(Array.isArray(nextAnswers) ? nextAnswers : []);
       setTimeline(Array.isArray(nextTimeline) ? nextTimeline : []);
       setAnswerText("");
-      setInfo("Отговорът е изпратен успешно.");
+      setInfo(text.answerSent);
     } catch (err) {
-      setError(err.message || "Неуспешно изпращане на отговора.");
+      setError(err.message || text.answerFailed);
     } finally {
       setBusy(false);
     }
@@ -246,7 +401,7 @@ export default function ModuleScreen({ route }) {
 
     if (!result.canceled && result.assets?.length > 0) {
       setPickedFile(result.assets[0]);
-      setInfo(`Избран файл: ${result.assets[0].name}`);
+      setInfo(`${text.fileSelected}: ${result.assets[0].name}`);
     }
   }
 
@@ -259,7 +414,7 @@ export default function ModuleScreen({ route }) {
 
     if (!result.canceled && result.assets?.length > 0) {
       setProfilePhotoFile(result.assets[0]);
-      setInfo(`Избрана профилна снимка: ${result.assets[0].name}`);
+      setInfo(`${text.profilePhotoSelected}: ${result.assets[0].name}`);
     }
   }
 
@@ -275,9 +430,9 @@ export default function ModuleScreen({ route }) {
       const updatedProfile = await uploadProfileImageMobile(profilePhotoFile);
       setProfile(updatedProfile);
       setProfilePhotoFile(null);
-      setInfo("Профилната снимка е обновена.");
+      setInfo(text.profilePhotoUpdated);
     } catch (err) {
-      setError(err.message || "Неуспешно качване на профилна снимка.");
+      setError(err.message || text.profilePhotoUploadFailed);
     } finally {
       setBusy(false);
     }
@@ -315,9 +470,9 @@ export default function ModuleScreen({ route }) {
       setMomentTitle("");
       setMomentDescription("");
       setPickedFile(null);
-      setInfo("Моментът е добавен успешно.");
+      setInfo(text.momentAdded);
     } catch (err) {
-      setError(err.message || "Неуспешно създаване на момент.");
+      setError(err.message || text.momentCreateFailed);
     } finally {
       setBusy(false);
     }
@@ -343,12 +498,12 @@ export default function ModuleScreen({ route }) {
       setInviteEmail("");
       setInviteRole("CHILD");
       if (response?.deliveryStatus === "SENT") {
-        setInfo("Поканата е изпратена успешно.");
+        setInfo(text.inviteSent);
       } else {
-        setInfo(`Имейлът не е изпратен (${response?.deliveryStatus || "UNKNOWN"}). Линк: ${response?.inviteLink || "-"}`);
+        setInfo(`${text.emailNotSent} (${response?.deliveryStatus || "UNKNOWN"}). Link: ${response?.inviteLink || "-"}`);
       }
     } catch (err) {
-      setError(err.message || "Неуспешно изпращане на поканата.");
+      setError(err.message || text.inviteSendFailed);
     } finally {
       setBusy(false);
     }
@@ -368,7 +523,7 @@ export default function ModuleScreen({ route }) {
         if (Platform.OS === "android") {
           const saved = await saveFileToAndroidFolder(name, file.contentType, file.bytes);
           if (saved) {
-            setInfo(`Файлът е запазен: ${name}`);
+            setInfo(`${text.fileSaved}: ${name}`);
           }
         } else if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(target);
@@ -388,7 +543,7 @@ export default function ModuleScreen({ route }) {
         await Linking.openURL(safeUri);
       }
     } catch (err) {
-      setError(err.message || "Неуспешно отваряне на файла.");
+      setError(err.message || text.fileOpenFailed);
     }
   }
 
@@ -409,9 +564,9 @@ export default function ModuleScreen({ route }) {
         includeAnswers: pdfForm.includeAnswers
       });
       setPdfPreview(preview);
-      setInfo("PDF прегледът е генериран.");
+      setInfo(text.pdfPreviewGenerated);
     } catch (err) {
-      setError(err.message || "Неуспешно генериране на PDF преглед.");
+      setError(err.message || text.pdfPreviewFailed);
     } finally {
       setBusy(false);
     }
@@ -441,18 +596,18 @@ export default function ModuleScreen({ route }) {
       if (Platform.OS === "android") {
         const saved = await saveFileToAndroidFolder(name, "application/pdf", file.bytes);
         if (saved) {
-          setInfo(`PDF файлът е запазен: ${name}`);
+          setInfo(`${text.pdfSaved}: ${name}`);
         }
       } else if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(target);
-        setInfo("PDF файлът е готов за споделяне/сваляне.");
+        setInfo(text.pdfReady);
       } else {
         const safeUri = await toSafeOpenUri(target);
         await Linking.openURL(safeUri);
-        setInfo("PDF файлът е готов за споделяне/сваляне.");
+        setInfo(text.pdfReady);
       }
     } catch (err) {
-      setError(err.message || "Неуспешно изтегляне на PDF.");
+      setError(err.message || text.pdfDownloadFailed);
     } finally {
       setBusy(false);
     }
@@ -465,10 +620,10 @@ export default function ModuleScreen({ route }) {
     return (
       <View style={styles.fileActionsRow}>
         <Pressable onPress={() => openAttachment(path, "view", preferredName)}>
-          <Text style={styles.fileAction}>Виж</Text>
+          <Text style={styles.fileAction}>{text.view}</Text>
         </Pressable>
         <Pressable onPress={() => openAttachment(path, "download", preferredName)}>
-          <Text style={styles.fileAction}>Свали</Text>
+          <Text style={styles.fileAction}>{text.download}</Text>
         </Pressable>
       </View>
     );
@@ -477,12 +632,12 @@ export default function ModuleScreen({ route }) {
   if (moduleKey === "profile") {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Моят профил</Text>
+        <Text style={styles.cardTitle}>{moduleTitles.profile}</Text>
         {profileImageUri ? <Image source={{ uri: profileImageUri }} style={styles.profileImage} /> : null}
-        {!profileImageUri ? <Text style={styles.emptyText}>Няма профилна снимка.</Text> : null}
+        {!profileImageUri ? <Text style={styles.emptyText}>{text.noProfilePhoto}</Text> : null}
         <View style={styles.fileActionsRow}>
           <Pressable onPress={onPickProfilePhoto}>
-            <Text style={styles.fileAction}>Избери профилна снимка</Text>
+            <Text style={styles.fileAction}>{text.chooseProfilePhoto}</Text>
           </Pressable>
           {profilePhotoFile ? <Text style={styles.itemMeta} numberOfLines={1}>{profilePhotoFile.name}</Text> : null}
         </View>
@@ -491,11 +646,11 @@ export default function ModuleScreen({ route }) {
           onPress={onUploadProfilePhoto}
           disabled={busy || !profilePhotoFile}
         >
-          <Text style={styles.primaryBtnText}>{busy ? "Качване..." : "Качи снимка"}</Text>
+          <Text style={styles.primaryBtnText}>{busy ? text.uploading : text.uploadPhoto}</Text>
         </Pressable>
-        <Text style={styles.rowText}>Потребител: {profile ? `${profile.firstName} ${profile.lastName}` : "-"}</Text>
+        <Text style={styles.rowText}>{text.user}: {profile ? `${profile.firstName} ${profile.lastName}` : "-"}</Text>
         <Text style={styles.rowText}>Email: {profile?.email || "-"}</Text>
-        <Text style={styles.rowText}>Семейство: {profile?.familyName || family?.name || "-"}</Text>
+        <Text style={styles.rowText}>{text.family}: {profile?.familyName || family?.name || "-"}</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
       </View>
@@ -505,15 +660,15 @@ export default function ModuleScreen({ route }) {
   if (moduleKey === "family") {
     return (
       <ScrollView style={styles.card} contentContainerStyle={styles.cardScrollContent}>
-        <Text style={styles.cardTitle}>Вашето семейство</Text>
-        <Text style={styles.rowText}>Име: {family?.name || "-"}</Text>
-        <Text style={styles.rowText}>Членове: {members.length}</Text>
+        <Text style={styles.cardTitle}>{moduleTitles.family}</Text>
+        <Text style={styles.rowText}>{text.name}: {family?.name || "-"}</Text>
+        <Text style={styles.rowText}>{text.members}: {members.length}</Text>
 
         {canInviteMembers ? (
           <>
             <TextInput
               style={styles.input}
-              placeholder="Email за покана"
+              placeholder={text.inviteEmail}
               value={inviteEmail}
               onChangeText={setInviteEmail}
               autoCapitalize="none"
@@ -523,13 +678,13 @@ export default function ModuleScreen({ route }) {
                 style={[styles.filterChip, inviteRole === "PARENT" && styles.filterChipActive]}
                 onPress={() => setInviteRole("PARENT")}
               >
-                <Text style={[styles.filterChipText, inviteRole === "PARENT" && styles.filterChipTextActive]}>Родител</Text>
+                <Text style={[styles.filterChipText, inviteRole === "PARENT" && styles.filterChipTextActive]}>{text.parent}</Text>
               </Pressable>
               <Pressable
                 style={[styles.filterChip, inviteRole === "CHILD" && styles.filterChipActive]}
                 onPress={() => setInviteRole("CHILD")}
               >
-                <Text style={[styles.filterChipText, inviteRole === "CHILD" && styles.filterChipTextActive]}>Дете</Text>
+                <Text style={[styles.filterChipText, inviteRole === "CHILD" && styles.filterChipTextActive]}>{text.child}</Text>
               </Pressable>
             </View>
             <Pressable
@@ -537,11 +692,11 @@ export default function ModuleScreen({ route }) {
               onPress={onSendInvite}
               disabled={busy || !inviteEmail.trim()}
             >
-              <Text style={styles.primaryBtnText}>{busy ? "Изпращане..." : "Изпрати покана"}</Text>
+              <Text style={styles.primaryBtnText}>{busy ? text.sending : text.sendInvite}</Text>
             </Pressable>
           </>
         ) : (
-          <Text style={styles.emptyText}>Само родител може да изпраща покани.</Text>
+          <Text style={styles.emptyText}>{text.parentOnlyInvite}</Text>
         )}
 
         {familyMembersWithLogged.map((member) => (
@@ -559,11 +714,11 @@ export default function ModuleScreen({ route }) {
   if (moduleKey === "question") {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Въпрос на деня</Text>
-        <Text style={styles.questionText}>{loading ? "Зареждане..." : todayQuestion?.title || "Няма наличен въпрос за деня."}</Text>
+        <Text style={styles.cardTitle}>{moduleTitles.question}</Text>
+        <Text style={styles.questionText}>{loading ? text.loading : todayQuestion?.title || text.noQuestion}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Вашият отговор"
+          placeholder={text.yourAnswer}
           value={answerText}
           onChangeText={setAnswerText}
           multiline
@@ -573,17 +728,17 @@ export default function ModuleScreen({ route }) {
           onPress={onSubmitAnswer}
           disabled={busy || !todayQuestion?.id || !familyId}
         >
-          <Text style={styles.primaryBtnText}>{busy ? "Изпращане..." : "Изпрати отговор"}</Text>
+          <Text style={styles.primaryBtnText}>{busy ? text.sending : text.sendAnswer}</Text>
         </Pressable>
 
         {filteredAnswers.slice(0, 4).map((answer) => (
           <View key={answer.id || `${answer.authorName}-${answer.createdAt}`} style={styles.item}>
-            <Text style={styles.itemTitle}>{answer.questionTitle || "Въпрос"}</Text>
+            <Text style={styles.itemTitle}>{answer.questionTitle || text.questionFallback}</Text>
             <Text style={styles.rowText} numberOfLines={2}>{answer.answerText}</Text>
-            <Text style={styles.itemMeta}>{answer.authorName || "Семейство"} | {formatDate(answer.createdAt)}</Text>
+            <Text style={styles.itemMeta}>{answer.authorName || text.memberFallback} | {formatDate(answer.createdAt, questionLanguage)}</Text>
           </View>
         ))}
-        {filteredAnswers.length === 0 ? <Text style={styles.emptyText}>Все още нямате отговори.</Text> : null}
+        {filteredAnswers.length === 0 ? <Text style={styles.emptyText}>{text.noAnswers}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
       </View>
@@ -593,16 +748,16 @@ export default function ModuleScreen({ route }) {
   if (moduleKey === "moments") {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Семейни моменти</Text>
+        <Text style={styles.cardTitle}>{moduleTitles.moments}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Заглавие"
+          placeholder={text.title}
           value={momentTitle}
           onChangeText={setMomentTitle}
         />
         <TextInput
           style={styles.input}
-          placeholder="Описание"
+          placeholder={text.description}
           value={momentDescription}
           onChangeText={setMomentDescription}
           multiline
@@ -610,7 +765,7 @@ export default function ModuleScreen({ route }) {
 
         <View style={styles.fileActionsRow}>
           <Pressable onPress={onPickFile}>
-            <Text style={styles.fileAction}>Прикачи файл</Text>
+            <Text style={styles.fileAction}>{text.attachFile}</Text>
           </Pressable>
           {pickedFile ? <Text style={styles.itemMeta} numberOfLines={1}>{pickedFile.name}</Text> : null}
         </View>
@@ -620,18 +775,18 @@ export default function ModuleScreen({ route }) {
           onPress={onCreateMoment}
           disabled={busy || !familyId || !momentTitle.trim()}
         >
-          <Text style={styles.primaryBtnText}>{busy ? "Добавяне..." : "Добави момент"}</Text>
+          <Text style={styles.primaryBtnText}>{busy ? text.adding : text.addMoment}</Text>
         </Pressable>
 
         {filteredMoments.slice(0, 4).map((moment) => (
           <View key={moment.id || `${moment.title}-${moment.createdAt}`} style={styles.item}>
             <Text style={styles.itemTitle}>{moment.title}</Text>
-            <Text style={styles.rowText} numberOfLines={2}>{moment.description || "Няма описание"}</Text>
+            <Text style={styles.rowText} numberOfLines={2}>{moment.description || text.noDescription}</Text>
             {renderAttachmentActions(moment.imageUrl, moment.title)}
-            <Text style={styles.itemMeta}>{moment.authorName || "Семейство"} | {formatDate(moment.createdAt)}</Text>
+            <Text style={styles.itemMeta}>{moment.authorName || text.memberFallback} | {formatDate(moment.createdAt, questionLanguage)}</Text>
           </View>
         ))}
-        {filteredMoments.length === 0 ? <Text style={styles.emptyText}>Все още нямате добавени моменти.</Text> : null}
+        {filteredMoments.length === 0 ? <Text style={styles.emptyText}>{text.noMoments}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
       </View>
@@ -641,31 +796,31 @@ export default function ModuleScreen({ route }) {
   if (moduleKey === "timeline") {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Семейна хроника</Text>
+        <Text style={styles.cardTitle}>{moduleTitles.timeline}</Text>
         <View style={styles.timelineFilters}>
           <Pressable
             style={[styles.filterChip, selectedTimelineType === "all" && styles.filterChipActive]}
             onPress={() => setSelectedTimelineType("all")}
           >
-            <Text style={[styles.filterChipText, selectedTimelineType === "all" && styles.filterChipTextActive]}>Всички типове</Text>
+            <Text style={[styles.filterChipText, selectedTimelineType === "all" && styles.filterChipTextActive]}>{text.allTypes}</Text>
           </Pressable>
           <Pressable
             style={[styles.filterChip, selectedTimelineType === "question" && styles.filterChipActive]}
             onPress={() => setSelectedTimelineType("question")}
           >
-            <Text style={[styles.filterChipText, selectedTimelineType === "question" && styles.filterChipTextActive]}>Въпроси</Text>
+            <Text style={[styles.filterChipText, selectedTimelineType === "question" && styles.filterChipTextActive]}>{text.questions}</Text>
           </Pressable>
           <Pressable
             style={[styles.filterChip, selectedTimelineType === "moment" && styles.filterChipActive]}
             onPress={() => setSelectedTimelineType("moment")}
           >
-            <Text style={[styles.filterChipText, selectedTimelineType === "moment" && styles.filterChipTextActive]}>Моменти</Text>
+            <Text style={[styles.filterChipText, selectedTimelineType === "moment" && styles.filterChipTextActive]}>{text.moments}</Text>
           </Pressable>
         </View>
         <View style={styles.timelineDateRow}>
           <TextInput
             style={[styles.input, styles.dateInput]}
-            placeholder="От (YYYY-MM-DD)"
+            placeholder={text.dateFrom}
             value={timelineDateFrom}
             onChangeText={setTimelineDateFrom}
             autoCapitalize="none"
@@ -673,7 +828,7 @@ export default function ModuleScreen({ route }) {
           />
           <TextInput
             style={[styles.input, styles.dateInput]}
-            placeholder="До (YYYY-MM-DD)"
+            placeholder={text.dateTo}
             value={timelineDateTo}
             onChangeText={setTimelineDateTo}
             autoCapitalize="none"
@@ -683,7 +838,7 @@ export default function ModuleScreen({ route }) {
             setTimelineDateFrom("");
             setTimelineDateTo("");
           }}>
-            <Text style={styles.clearDateText}>Изчисти дати</Text>
+            <Text style={styles.clearDateText}>{text.clearDates}</Text>
           </Pressable>
         </View>
         <View style={styles.timelineFilters}>
@@ -691,7 +846,7 @@ export default function ModuleScreen({ route }) {
             style={[styles.filterChip, selectedTimelineMemberId === "all" && styles.filterChipActive]}
             onPress={() => setSelectedTimelineMemberId("all")}
           >
-            <Text style={[styles.filterChipText, selectedTimelineMemberId === "all" && styles.filterChipTextActive]}>Всички</Text>
+            <Text style={[styles.filterChipText, selectedTimelineMemberId === "all" && styles.filterChipTextActive]}>{text.all}</Text>
           </Pressable>
           {members.map((member) => {
             const memberId = String(member.userId);
@@ -710,12 +865,12 @@ export default function ModuleScreen({ route }) {
         {filteredTimeline.map((item) => (
           <View key={item.sourceId || `${item.type}-${item.createdAt}`} style={styles.item}>
             <Text style={styles.itemTitle}>{item.type} | {item.title}</Text>
-            <Text style={styles.rowText} numberOfLines={2}>{item.details || "Няма подробности"}</Text>
+            <Text style={styles.rowText} numberOfLines={2}>{item.details || text.noDetails}</Text>
             {renderAttachmentActions(item.imageUrl, item.title)}
-            <Text style={styles.itemMeta}>{item.author || "Семейство"} | {formatDate(item.createdAt)}</Text>
+            <Text style={styles.itemMeta}>{item.author || text.memberFallback} | {formatDate(item.createdAt, questionLanguage)}</Text>
           </View>
         ))}
-        {filteredTimeline.length === 0 ? <Text style={styles.emptyText}>Няма записи за избрания член.</Text> : null}
+        {filteredTimeline.length === 0 ? <Text style={styles.emptyText}>{text.noTimeline}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
     );
@@ -723,17 +878,17 @@ export default function ModuleScreen({ route }) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>Семейна PDF книга</Text>
+      <Text style={styles.cardTitle}>{moduleTitles.pdf}</Text>
 
       <View style={styles.switchRow}>
-        <Text style={styles.rowText}>Включи моменти</Text>
+        <Text style={styles.rowText}>{text.includeMoments}</Text>
         <Switch
           value={pdfForm.includeMoments}
           onValueChange={(value) => setPdfForm((prev) => ({ ...prev, includeMoments: value }))}
         />
       </View>
       <View style={styles.switchRow}>
-        <Text style={styles.rowText}>Включи отговори</Text>
+        <Text style={styles.rowText}>{text.includeAnswers}</Text>
         <Switch
           value={pdfForm.includeAnswers}
           onValueChange={(value) => setPdfForm((prev) => ({ ...prev, includeAnswers: value }))}
@@ -741,15 +896,15 @@ export default function ModuleScreen({ route }) {
       </View>
 
       <Pressable style={[styles.primaryBtn, busy && styles.disabled]} onPress={onCreatePdfPreview} disabled={busy || !familyId}>
-        <Text style={styles.primaryBtnText}>Генерирай преглед</Text>
+        <Text style={styles.primaryBtnText}>{text.generatePreview}</Text>
       </Pressable>
       <Pressable style={[styles.secondaryBtnInline, busy && styles.disabled]} onPress={onDownloadPdf} disabled={busy || !familyId}>
-        <Text style={styles.secondaryBtnText}>Свали PDF</Text>
+        <Text style={styles.secondaryBtnText}>{text.downloadPdf}</Text>
       </Pressable>
 
-      <Text style={styles.rowText}>Статус: {pdfPreview?.status || "-"}</Text>
-      <Text style={styles.rowText}>Период: {pdfPreview?.period || pdfForm.period}</Text>
-      <Text style={styles.rowText}>Стил: {pdfPreview?.style || pdfForm.style}</Text>
+      <Text style={styles.rowText}>{text.status}: {pdfPreview?.status || "-"}</Text>
+      <Text style={styles.rowText}>{text.period}: {pdfPreview?.period || pdfForm.period}</Text>
+      <Text style={styles.rowText}>{text.style}: {pdfPreview?.style || pdfForm.style}</Text>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {info ? <Text style={styles.info}>{info}</Text> : null}
@@ -757,7 +912,7 @@ export default function ModuleScreen({ route }) {
   );
 }
 
-function formatDate(value) {
+function formatDate(value, language = "bg") {
   if (!value) {
     return "-";
   }
@@ -765,12 +920,13 @@ function formatDate(value) {
   if (Number.isNaN(date.getTime())) {
     return value;
   }
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = String(date.getFullYear());
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${day}.${month}.${year} г., ${hours}:${minutes}`;
+  return date.toLocaleString(language === "en" ? "en-US" : "bg-BG", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
 function extractFileNameFromDisposition(disposition) {
@@ -880,7 +1036,7 @@ function isWithinDateRange(value, fromDate, toDate) {
 }
 
 function resolveMemberName(member) {
-  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || "Член";
+  return `${member?.firstName || ""} ${member?.lastName || ""}`.trim() || member?.email || "Member";
 }
 
 function normalizeName(value) {

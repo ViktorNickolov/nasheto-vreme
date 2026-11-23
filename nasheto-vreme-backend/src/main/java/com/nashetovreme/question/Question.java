@@ -19,6 +19,9 @@ public class Question extends BaseEntity {
     @Column(nullable = false, length = 120)
     private String category;
 
+    @Column(nullable = false, length = 2)
+    private String language = "en";
+
     @Column(nullable = false)
     private boolean active = true;
 }

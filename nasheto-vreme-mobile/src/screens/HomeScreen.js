@@ -2,18 +2,45 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { getSessionUser } from "../auth/session";
 import { logoutMobile } from "../api/http";
+import { useAppLanguage } from "../config/language";
 
-const modules = [
-  { key: "profile", label: "Моят профил" },
-  { key: "family", label: "Вашето семейство" },
-  { key: "question", label: "Въпрос на деня" },
-  { key: "moments", label: "Семейни моменти" },
-  { key: "timeline", label: "Семейна хроника" },
-  { key: "pdf", label: "Семейна PDF книга" }
-];
+const moduleLabels = {
+  bg: {
+    profile: "Моят профил",
+    family: "Вашето семейство",
+    question: "Въпрос на деня",
+    moments: "Семейни моменти",
+    timeline: "Семейна хроника",
+    pdf: "Семейна PDF книга"
+  },
+  en: {
+    profile: "My profile",
+    family: "Your family",
+    question: "Question of the day",
+    moments: "Family moments",
+    timeline: "Family timeline",
+    pdf: "Family PDF book"
+  }
+};
+
+const modules = ["profile", "family", "question", "moments", "timeline", "pdf"];
 
 export default function HomeScreen({ navigation }) {
+  const { appLanguage } = useAppLanguage();
   const user = getSessionUser();
+  const labels = appLanguage === "en"
+    ? {
+        title: "Our Time",
+        subtitleFallback: "Select a module",
+        helper: "Keep your beautiful moments and family conversations.",
+        logout: "Logout"
+      }
+    : {
+        title: "Нашето време",
+        subtitleFallback: "Изберете модул",
+        helper: "Запазете красивите мигове и семейните разговори.",
+        logout: "Изход"
+      };
 
   async function onLogout() {
     await logoutMobile();
@@ -23,25 +50,28 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.headerCard}>
-        <Text style={styles.title}>Нашето време</Text>
-        <Text style={styles.subtitle}>{user ? `${user.firstName} ${user.lastName}` : "Изберете модул"}</Text>
-        <Text style={styles.helperText}>Запазете красивите мигове и семейните разговори.</Text>
+        <Text style={styles.title}>{labels.title}</Text>
+        <Text style={styles.subtitle}>{user ? `${user.firstName} ${user.lastName}` : labels.subtitleFallback}</Text>
+        <Text style={styles.helperText}>{labels.helper}</Text>
       </View>
 
       <View style={styles.menuCard}>
-        {modules.map((module) => (
+        {modules.map((moduleKey) => (
           <Pressable
-            key={module.key}
+            key={moduleKey}
             style={styles.moduleBtn}
-            onPress={() => navigation.navigate("Module", { moduleKey: module.key, title: module.label })}
+            onPress={() => navigation.navigate("Module", {
+              moduleKey,
+              title: moduleLabels[appLanguage]?.[moduleKey] || moduleLabels.bg[moduleKey]
+            })}
           >
-            <Text style={styles.moduleBtnText}>{module.label}</Text>
+            <Text style={styles.moduleBtnText}>{moduleLabels[appLanguage]?.[moduleKey] || moduleLabels.bg[moduleKey]}</Text>
           </Pressable>
         ))}
       </View>
 
       <Pressable style={styles.secondaryBtn} onPress={onLogout}>
-        <Text style={styles.secondaryBtnText}>Изход</Text>
+        <Text style={styles.secondaryBtnText}>{labels.logout}</Text>
       </Pressable>
     </View>
   );

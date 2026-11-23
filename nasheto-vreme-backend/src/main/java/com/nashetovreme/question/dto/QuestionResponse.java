@@ -6,6 +6,7 @@ public record QuestionResponse(
         Long id,
         String title,
         String category,
+        String language,
         boolean active,
         Instant createdAt
 ) {

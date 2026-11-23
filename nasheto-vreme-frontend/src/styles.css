@@ -122,6 +122,12 @@ button:hover {
   animation: cardIn 340ms ease;
 }
 
+.auth-language-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
 .brand-row {
   display: flex;
   gap: 12px;
@@ -425,6 +431,29 @@ button:hover {
 
 .topbar h2 {
   color: #6c5847;
+}
+
+.topbar-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.app-language-switch {
+  margin: 0;
+  margin-left: auto;
+}
+
+.language-toggle-btn {
+  height: 30px;
+  min-width: 52px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(79, 71, 63, 0.14);
 }
 
 .module-note {
