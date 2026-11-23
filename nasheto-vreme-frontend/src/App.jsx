@@ -901,20 +901,22 @@ export default function App() {
           <label className="check-filter">
             <input name="includeAnswers" type="checkbox" checked={pdfForm.includeAnswers} onChange={updateForm(setPdfForm)} /> Включи отговори
           </label>
-          <button type="submit">Генерирай преглед</button>
+          {!pdfPreviewUrl ? <button type="submit">Преглед</button> : null}
         </form>
         {pdfPreviewUrl ? (
-          <button id="downloadPdfBtn" type="button" onClick={onDownloadPdf}>Изтегли PDF</button>
+          <button id="downloadPdfBtn" type="button" onClick={onDownloadPdf}>Свали</button>
         ) : (
           <p className="small-muted">След генериране на преглед бутонът за изтегляне ще се появи тук.</p>
         )}
-        <div className="info-grid" id="pdfPreviewCard">
-          <InfoItem label="Статус" value={pdfPreview?.status || "-"} />
-          <InfoItem label="Период" value={pdfPreview?.period || "-"} />
-          <InfoItem label="Стил" value={pdfPreview?.style || "-"} />
-          <InfoItem label="Моменти" value={pdfPreview?.includedMoments ?? "-"} />
-          <InfoItem label="Отговори" value={pdfPreview?.includedAnswers ?? "-"} />
-        </div>
+        {pdfPreviewUrl ? (
+          <div className="info-grid" id="pdfPreviewCard">
+            <InfoItem label="Статус" value={pdfPreview?.status || "-"} />
+            <InfoItem label="Период" value={pdfPreview?.period || "-"} />
+            <InfoItem label="Стил" value={pdfPreview?.style || "-"} />
+            <InfoItem label="Моменти" value={pdfPreview?.includedMoments ?? "-"} />
+            <InfoItem label="Отговори" value={pdfPreview?.includedAnswers ?? "-"} />
+          </div>
+        ) : null}
         {pdfPreviewUrl ? (
           <iframe
             title="PDF Preview"

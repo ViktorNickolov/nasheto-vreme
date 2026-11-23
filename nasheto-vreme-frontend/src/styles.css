@@ -799,6 +799,16 @@ button:hover {
   justify-self: start;
 }
 
+#pdfExportForm button[type="submit"] {
+  grid-column: 2;
+  justify-self: end;
+}
+
+#downloadPdfBtn {
+  display: block;
+  margin-left: auto;
+}
+
 #createMomentForm button[type="submit"] {
   height: 36px;
   min-width: 130px;
