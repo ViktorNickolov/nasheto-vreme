@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { getSessionUser } from "../auth/session";
 import { logoutMobile } from "../api/http";
 import { useAppLanguage } from "../config/language";
@@ -10,6 +10,8 @@ const moduleLabels = {
     family: "Вашето семейство",
     question: "Въпрос на деня",
     moments: "Семейни моменти",
+    emotions: "Нашите емоции",
+    together: "Време заедно",
     timeline: "Семейна хроника",
     pdf: "Семейна PDF книга"
   },
@@ -18,12 +20,14 @@ const moduleLabels = {
     family: "Your family",
     question: "Question of the day",
     moments: "Family moments",
+    emotions: "Our emotions",
+    together: "Time together",
     timeline: "Family timeline",
     pdf: "Family PDF book"
   }
 };
 
-const modules = ["profile", "family", "question", "moments", "timeline", "pdf"];
+const modules = ["profile", "family", "question", "moments", "emotions", "together", "timeline", "pdf"];
 
 export default function HomeScreen({ navigation }) {
   const { appLanguage } = useAppLanguage();
@@ -55,7 +59,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.helperText}>{labels.helper}</Text>
       </View>
 
-      <View style={styles.menuCard}>
+      <ScrollView style={styles.menuCard} contentContainerStyle={styles.menuCardContent}>
         {modules.map((moduleKey) => (
           <Pressable
             key={moduleKey}
@@ -68,7 +72,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.moduleBtnText}>{moduleLabels[appLanguage]?.[moduleKey] || moduleLabels.bg[moduleKey]}</Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
 
       <Pressable style={styles.secondaryBtn} onPress={onLogout}>
         <Text style={styles.secondaryBtnText}>{labels.logout}</Text>
@@ -115,9 +119,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e2d8cb",
     borderRadius: 18,
-    padding: 12,
-    gap: 10,
     flex: 1
+  },
+  menuCardContent: {
+    padding: 12,
+    gap: 10
   },
   moduleBtn: {
     backgroundColor: "#e9eee2",

@@ -2,10 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   answerQuestion,
   clearAuth,
+  createEmotion,
   createMoment,
+  createPrivacyRequest,
   createPdfPreview,
+  createTogetherActivity,
   downloadUploadedFile,
   downloadPdfBook,
+  exportMyPrivacyData,
   getApiBaseUrl,
   getAuth,
   getFamily,
@@ -14,6 +18,9 @@ import {
   getTimeline,
   getTodayQuestion,
   listMoments,
+  listEmotions,
+  listMyPrivacyRequests,
+  listTogetherActivities,
   login,
   logoutSession,
   me,
@@ -32,6 +39,9 @@ const initialLogin = { email: "", password: "" };
 const initialRegister = { email: "", password: "", firstName: "", lastName: "", familyName: "", inviteToken: "" };
 const initialAnswer = { answerText: "" };
 const initialMoment = { title: "", description: "", imageUrl: "" };
+const initialEmotion = { emotionType: "HAPPY", happenedNote: "", helpedNote: "", needsNote: "", wantToTalk: false };
+const initialTogether = { title: "", category: "", description: "", durationMinutes: 15 };
+const initialPrivacyRequest = { requestType: "EXPORT_DATA", note: "" };
 const initialInvite = { email: "", role: "CHILD" };
 const initialPdf = {
   period: "monthly",
@@ -40,7 +50,7 @@ const initialPdf = {
   includeAnswers: true
 };
 
-const MODULE_KEYS = ["profile", "family", "question", "moments", "timeline", "pdf"];
+const MODULE_KEYS = ["profile", "family", "question", "moments", "emotions", "together", "timeline", "pdf"];
 
 const dashboardLabels = {
   bg: {
@@ -48,6 +58,8 @@ const dashboardLabels = {
     family: "Вашето семейство",
     question: "Въпрос на деня",
     moments: "Семейни моменти",
+    emotions: "Нашите емоции",
+    together: "Време заедно",
     timeline: "Семейна хроника",
     pdf: "Семейна PDF книга"
   },
@@ -56,6 +68,8 @@ const dashboardLabels = {
     family: "Your family",
     question: "Question of the day",
     moments: "Family moments",
+    emotions: "Our emotions",
+    together: "Time together",
     timeline: "Family timeline",
     pdf: "Family PDF book"
   }
@@ -180,7 +194,35 @@ const webText = {
     momentsCount: "Моменти",
     timelineCount: "Хроника",
     pulseTipTitle: "Малка идея за днес",
-    pulseTip: "Добавете един момент със снимка и кратко описание."
+    pulseTip: "Добавете един момент със снимка и кратко описание.",
+    emotionType: "Емоция",
+    happenedNote: "Какво се случи?",
+    helpedNote: "Какво ти помогна?",
+    needsNote: "От какво имаш нужда?",
+    wantToTalk: "Искаш ли да поговорим?",
+    saveEmotion: "Запази емоция",
+    noEmotionsYet: "Все още няма споделени емоции.",
+    togetherTitlePlaceholder: "Идея за дейност",
+    togetherCategoryPlaceholder: "Категория (Разговори, Игри, Навън)",
+    durationMinutes: "Продължителност (минути)",
+    saveTogetherActivity: "Запази дейност",
+    noTogetherActivitiesYet: "Все още няма запазени дейности.",
+    privacyCenter: "Поверителност и данни",
+    privacyExport: "Експорт на моите данни",
+    privacyDelete: "Заявка за изтриване на данни",
+    submitPrivacyRequest: "Изпрати заявка",
+    privacyRequests: "Моите заявки",
+    noPrivacyRequests: "Няма изпратени заявки.",
+    privacyRequestType: "Тип заявка",
+    privacyRequestNote: "Бележка (по желание)",
+    privacyRequestSent: "Заявката е изпратена.",
+    privacyExportReady: "Експортът е подготвен и изтеглен.",
+    emotionHappy: "Радост",
+    emotionSad: "Тъга",
+    emotionAngry: "Гняв",
+    emotionFear: "Страх",
+    emotionCalm: "Спокойствие",
+    emotionExcited: "Вълнение"
   },
   en: {
     inviteOpened: "You opened a family invite link.",
@@ -280,7 +322,35 @@ const webText = {
     momentsCount: "Moments",
     timelineCount: "Timeline",
     pulseTipTitle: "Small idea for today",
-    pulseTip: "Add one moment with a photo and short description."
+    pulseTip: "Add one moment with a photo and short description.",
+    emotionType: "Emotion",
+    happenedNote: "What happened?",
+    helpedNote: "What helped you?",
+    needsNote: "What do you need?",
+    wantToTalk: "Would you like to talk?",
+    saveEmotion: "Save emotion",
+    noEmotionsYet: "No shared emotions yet.",
+    togetherTitlePlaceholder: "Activity idea",
+    togetherCategoryPlaceholder: "Category (Talks, Games, Outdoors)",
+    durationMinutes: "Duration (minutes)",
+    saveTogetherActivity: "Save activity",
+    noTogetherActivitiesYet: "No saved activities yet.",
+    privacyCenter: "Privacy and data",
+    privacyExport: "Export my data",
+    privacyDelete: "Delete data request",
+    submitPrivacyRequest: "Submit request",
+    privacyRequests: "My requests",
+    noPrivacyRequests: "No requests submitted yet.",
+    privacyRequestType: "Request type",
+    privacyRequestNote: "Note (optional)",
+    privacyRequestSent: "Request submitted.",
+    privacyExportReady: "Your export has been prepared and downloaded.",
+    emotionHappy: "Happy",
+    emotionSad: "Sad",
+    emotionAngry: "Angry",
+    emotionFear: "Fear",
+    emotionCalm: "Calm",
+    emotionExcited: "Excited"
   }
 };
 
@@ -348,6 +418,8 @@ export default function App() {
   const [members, setMembers] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [moments, setMoments] = useState([]);
+  const [emotions, setEmotions] = useState([]);
+  const [togetherActivities, setTogetherActivities] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [pdfPreview, setPdfPreview] = useState(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
@@ -370,6 +442,10 @@ export default function App() {
   const [uploadFile, setUploadFile] = useState(null);
   const [profileUploadFile, setProfileUploadFile] = useState(null);
   const [inviteForm, setInviteForm] = useState(initialInvite);
+  const [emotionForm, setEmotionForm] = useState(initialEmotion);
+  const [togetherForm, setTogetherForm] = useState(initialTogether);
+  const [privacyRequestForm, setPrivacyRequestForm] = useState(initialPrivacyRequest);
+  const [privacyRequests, setPrivacyRequests] = useState([]);
 
   const isLogged = Boolean(auth?.accessToken);
   const canInviteMembers = profile?.role === "PARENT";
@@ -493,6 +569,8 @@ export default function App() {
     setMembers([]);
     setAnswers([]);
     setMoments([]);
+    setEmotions([]);
+    setTogetherActivities([]);
     setTimeline([]);
     setPdfPreview(null);
     if (pdfPreviewUrl) {
@@ -502,6 +580,10 @@ export default function App() {
     setTodayQuestion(null);
     setAnswerForm(initialAnswer);
     setMomentForm(initialMoment);
+    setEmotionForm(initialEmotion);
+    setTogetherForm(initialTogether);
+    setPrivacyRequestForm(initialPrivacyRequest);
+    setPrivacyRequests([]);
     setPdfForm(initialPdf);
     setUploadFile(null);
     setSelectedTimelineMemberId("all");
@@ -668,6 +750,30 @@ export default function App() {
     return result;
   }
 
+  async function loadEmotions(profileValue = profile) {
+    if (!profileValue?.familyId) {
+      return [];
+    }
+    const result = await listEmotions(profileValue.familyId);
+    setEmotions(result);
+    return result;
+  }
+
+  async function loadTogetherActivities(profileValue = profile) {
+    if (!profileValue?.familyId) {
+      return [];
+    }
+    const result = await listTogetherActivities(profileValue.familyId);
+    setTogetherActivities(result);
+    return result;
+  }
+
+  async function loadPrivacyRequestsData() {
+    const result = await listMyPrivacyRequests();
+    setPrivacyRequests(Array.isArray(result) ? result : []);
+    return result;
+  }
+
   async function loadTimeline(profileValue = profile) {
     if (!profileValue?.familyId) {
       return [];
@@ -708,9 +814,12 @@ export default function App() {
     await Promise.all([
       loadFamilyData(profileResult),
       loadMoments(profileResult),
+      loadEmotions(profileResult),
+      loadTogetherActivities(profileResult),
       loadAnswers(profileResult),
       loadTimeline(profileResult),
-      loadTodayQuestionData()
+      loadTodayQuestionData(),
+      loadPrivacyRequestsData()
     ]);
   }
 
@@ -846,6 +955,78 @@ export default function App() {
     }, { authSensitive: true });
   }
 
+  async function submitEmotion(event) {
+    event.preventDefault();
+    await withBusy(async () => {
+      if (!profile?.familyId) {
+        throw new Error(ui.profileNotLoaded);
+      }
+
+      const result = await createEmotion({
+        familyId: Number(profile.familyId),
+        emotionType: emotionForm.emotionType,
+        happenedNote: emotionForm.happenedNote,
+        helpedNote: emotionForm.helpedNote,
+        needsNote: emotionForm.needsNote,
+        wantToTalk: emotionForm.wantToTalk
+      });
+
+      setEmotionForm(initialEmotion);
+      await Promise.all([loadEmotions(), loadTimeline()]);
+      show(result);
+    }, { authSensitive: true });
+  }
+
+  async function submitTogetherActivity(event) {
+    event.preventDefault();
+    await withBusy(async () => {
+      if (!profile?.familyId) {
+        throw new Error(ui.profileNotLoaded);
+      }
+
+      const result = await createTogetherActivity({
+        familyId: Number(profile.familyId),
+        title: togetherForm.title,
+        category: togetherForm.category,
+        description: togetherForm.description,
+        durationMinutes: Number(togetherForm.durationMinutes) || null
+      });
+
+      setTogetherForm(initialTogether);
+      await Promise.all([loadTogetherActivities(), loadTimeline()]);
+      show(result);
+    }, { authSensitive: true });
+  }
+
+  async function submitPrivacyRequest(event) {
+    event.preventDefault();
+    await withBusy(async () => {
+      const result = await createPrivacyRequest(privacyRequestForm);
+      setPrivacyRequestForm(initialPrivacyRequest);
+      setAuthInfo(ui.privacyRequestSent);
+      await loadPrivacyRequestsData();
+      show(result);
+    }, { authSensitive: true });
+  }
+
+  async function downloadPrivacyExport() {
+    await withBusy(async () => {
+      const result = await exportMyPrivacyData();
+      const content = JSON.stringify(result, null, 2);
+      const blob = new Blob([content], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "nasheto-vreme-privacy-export.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setAuthInfo(ui.privacyExportReady);
+      show(result);
+    }, { authSensitive: true });
+  }
+
   async function submitPdfPreview(event) {
     event.preventDefault();
     await withBusy(async () => {
@@ -946,6 +1127,41 @@ export default function App() {
             <InfoItem label={ui.email} value={profile?.email || "-"} />
             <InfoItem label={ui.family} value={profile?.familyName || family?.name || "-"} />
             <InfoItem label={ui.status} value={auth?.accessToken ? ui.activeSession : ui.inactiveSession} />
+          </div>
+          <div className="cardhead compact">
+            <h3>{ui.privacyCenter}</h3>
+          </div>
+          <div className="actions">
+            <button type="button" className="secondary" onClick={downloadPrivacyExport}>{ui.privacyExport}</button>
+          </div>
+          <form className="grid2" onSubmit={submitPrivacyRequest}>
+            <label className="select-filter">
+              {ui.privacyRequestType}
+              <select name="requestType" value={privacyRequestForm.requestType} onChange={updateForm(setPrivacyRequestForm)}>
+                <option value="EXPORT_DATA">{ui.privacyExport}</option>
+                <option value="DELETE_DATA">{ui.privacyDelete}</option>
+              </select>
+            </label>
+            <input
+              name="note"
+              type="text"
+              placeholder={ui.privacyRequestNote}
+              value={privacyRequestForm.note}
+              onChange={updateForm(setPrivacyRequestForm)}
+            />
+            <button type="submit">{ui.submitPrivacyRequest}</button>
+          </form>
+          <div className="cardhead compact">
+            <h3>{ui.privacyRequests}</h3>
+          </div>
+          <div className="list">
+            {privacyRequests.length === 0 ? <p className="small-muted">{ui.noPrivacyRequests}</p> : privacyRequests.map((request) => (
+              <article className="list-item" key={request.id}>
+                <h4>{request.requestType}</h4>
+                <p>{request.note || "-"}</p>
+                <div className="list-meta">{request.status} | {formatDate(request.createdAt)}</div>
+              </article>
+            ))}
           </div>
         </section>
       );
@@ -1055,6 +1271,122 @@ export default function App() {
                 {moment.imageUrl ? <AttachmentPreview filePath={moment.imageUrl} language={questionLanguage} /> : null}
                 <p>{moment.description || ui.noDescription}</p>
                 <div className="list-meta">{moment.authorName || ui.memberFallback} | {formatDate(moment.createdAt)}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    if (activeModule === "emotions") {
+      const emotionOptions = [
+        { value: "HAPPY", label: ui.emotionHappy },
+        { value: "SAD", label: ui.emotionSad },
+        { value: "ANGRY", label: ui.emotionAngry },
+        { value: "FEAR", label: ui.emotionFear },
+        { value: "CALM", label: ui.emotionCalm },
+        { value: "EXCITED", label: ui.emotionExcited }
+      ];
+
+      return (
+        <section className="card">
+          <div className="cardhead">
+            <h3>{moduleLabelsByKey.emotions}</h3>
+          </div>
+          <form className="grid2" onSubmit={submitEmotion}>
+            <label className="select-filter">
+              {ui.emotionType}
+              <select name="emotionType" value={emotionForm.emotionType} onChange={updateForm(setEmotionForm)}>
+                {emotionOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+            <label className="check-filter">
+              <input name="wantToTalk" type="checkbox" checked={emotionForm.wantToTalk} onChange={updateForm(setEmotionForm)} /> {ui.wantToTalk}
+            </label>
+            <input
+              name="happenedNote"
+              type="text"
+              placeholder={ui.happenedNote}
+              value={emotionForm.happenedNote}
+              onChange={updateForm(setEmotionForm)}
+            />
+            <input
+              name="helpedNote"
+              type="text"
+              placeholder={ui.helpedNote}
+              value={emotionForm.helpedNote}
+              onChange={updateForm(setEmotionForm)}
+            />
+            <input
+              name="needsNote"
+              type="text"
+              placeholder={ui.needsNote}
+              value={emotionForm.needsNote}
+              onChange={updateForm(setEmotionForm)}
+            />
+            <button type="submit">{ui.saveEmotion}</button>
+          </form>
+          <div className="list">
+            {emotions.length === 0 ? <p className="small-muted">{ui.noEmotionsYet}</p> : emotions.map((item) => (
+              <article className="list-item" key={item.id || `${item.authorId}-${item.createdAt}`}>
+                <h4>{item.emotionType}</h4>
+                <p>{item.happenedNote || item.helpedNote || item.needsNote || ui.noDetails}</p>
+                <div className="list-meta">{item.authorName || ui.memberFallback} | {formatDate(item.createdAt)}</div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    if (activeModule === "together") {
+      return (
+        <section className="card">
+          <div className="cardhead">
+            <h3>{moduleLabelsByKey.together}</h3>
+          </div>
+          <form className="grid2" onSubmit={submitTogetherActivity}>
+            <input
+              name="title"
+              type="text"
+              placeholder={ui.togetherTitlePlaceholder}
+              value={togetherForm.title}
+              onChange={updateForm(setTogetherForm)}
+              required
+            />
+            <input
+              name="category"
+              type="text"
+              placeholder={ui.togetherCategoryPlaceholder}
+              value={togetherForm.category}
+              onChange={updateForm(setTogetherForm)}
+            />
+            <input
+              name="description"
+              type="text"
+              placeholder={ui.descriptionPlaceholder}
+              value={togetherForm.description}
+              onChange={updateForm(setTogetherForm)}
+            />
+            <input
+              name="durationMinutes"
+              type="number"
+              min="1"
+              max="720"
+              placeholder={ui.durationMinutes}
+              value={togetherForm.durationMinutes}
+              onChange={updateForm(setTogetherForm)}
+            />
+            <button type="submit">{ui.saveTogetherActivity}</button>
+          </form>
+          <div className="list">
+            {togetherActivities.length === 0 ? <p className="small-muted">{ui.noTogetherActivitiesYet}</p> : togetherActivities.map((item) => (
+              <article className="list-item" key={item.id || `${item.authorId}-${item.createdAt}`}>
+                <h4>{item.title}</h4>
+                <p>{item.description || ui.noDescription}</p>
+                <div className="list-meta">
+                  {(item.category || "-")} | {(item.durationMinutes || 0)} min | {item.authorName || ui.memberFallback} | {formatDate(item.createdAt)}
+                </div>
               </article>
             ))}
           </div>

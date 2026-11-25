@@ -7,17 +7,24 @@ import * as Sharing from "expo-sharing";
 import { getSessionUser } from "../auth/session";
 import {
   answerTodayQuestionMobile,
+  createEmotionMobile,
   createMomentMobile,
   createPdfPreviewMobile,
+  createPrivacyRequestMobile,
+  createTogetherActivityMobile,
   downloadPdfMobile,
   downloadUploadedFileMobile,
+  exportMyPrivacyDataMobile,
   getFamilyAnswersMobile,
   getFamilyMembersMobile,
   getFamilyMobile,
   getProfileMobile,
   getTimelineMobile,
   getTodayQuestionMobile,
+  listEmotionsMobile,
+  listMyPrivacyRequestsMobile,
   listMomentsMobile,
+  listTogetherActivitiesMobile,
   sendFamilyInvitationMobile,
   uploadProfileImageMobile,
   uploadFamilyFileMobile
@@ -43,12 +50,26 @@ export default function ModuleScreen({ route }) {
   const [todayQuestion, setTodayQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [moments, setMoments] = useState([]);
+  const [emotions, setEmotions] = useState([]);
+  const [togetherActivities, setTogetherActivities] = useState([]);
+  const [privacyRequests, setPrivacyRequests] = useState([]);
   const [timeline, setTimeline] = useState([]);
 
   const [answerText, setAnswerText] = useState("");
   const [momentTitle, setMomentTitle] = useState("");
   const [momentDescription, setMomentDescription] = useState("");
   const [pickedFile, setPickedFile] = useState(null);
+  const [emotionType, setEmotionType] = useState("HAPPY");
+  const [emotionHappened, setEmotionHappened] = useState("");
+  const [emotionHelped, setEmotionHelped] = useState("");
+  const [emotionNeeds, setEmotionNeeds] = useState("");
+  const [emotionWantToTalk, setEmotionWantToTalk] = useState(false);
+  const [togetherTitle, setTogetherTitle] = useState("");
+  const [togetherCategory, setTogetherCategory] = useState("");
+  const [togetherDescription, setTogetherDescription] = useState("");
+  const [togetherDuration, setTogetherDuration] = useState("15");
+  const [privacyRequestType, setPrivacyRequestType] = useState("EXPORT_DATA");
+  const [privacyRequestNote, setPrivacyRequestNote] = useState("");
   const [selectedTimelineMemberId, setSelectedTimelineMemberId] = useState("all");
   const [selectedTimelineType, setSelectedTimelineType] = useState("all");
   const [timelineDateFrom, setTimelineDateFrom] = useState("");
@@ -73,6 +94,8 @@ export default function ModuleScreen({ route }) {
         family: "Your family",
         question: "Question of the day",
         moments: "Family moments",
+        emotions: "Our emotions",
+        together: "Time together",
         timeline: "Family timeline",
         pdf: "Family PDF book"
       }
@@ -81,6 +104,8 @@ export default function ModuleScreen({ route }) {
         family: "Вашето семейство",
         question: "Въпрос на деня",
         moments: "Семейни моменти",
+        emotions: "Нашите емоции",
+        together: "Време заедно",
         timeline: "Семейна хроника",
         pdf: "Семейна PDF книга"
       };
@@ -152,6 +177,25 @@ export default function ModuleScreen({ route }) {
         period: "Period",
         style: "Style",
         memberFallback: "Member"
+        ,emotionType: "Emotion"
+        ,happenedNote: "What happened?"
+        ,helpedNote: "What helped you?"
+        ,needsNote: "What do you need?"
+        ,wantToTalk: "Would you like to talk?"
+        ,saveEmotion: "Save emotion"
+        ,noEmotions: "No shared emotions yet."
+        ,togetherTitle: "Activity idea"
+        ,togetherCategory: "Category"
+        ,togetherDuration: "Duration (minutes)"
+        ,saveTogether: "Save activity"
+        ,noTogether: "No activities yet."
+        ,privacyCenter: "Privacy and data"
+        ,privacyRequestType: "Request type"
+        ,privacyRequestNote: "Note (optional)"
+        ,submitPrivacyRequest: "Submit request"
+        ,privacyExport: "Export my data"
+        ,privacyRequests: "My requests"
+        ,noPrivacyRequests: "No requests yet."
       }
     : {
         loadFailed: "Неуспешно зареждане на данните.",
@@ -220,6 +264,25 @@ export default function ModuleScreen({ route }) {
         period: "Период",
         style: "Стил",
         memberFallback: "Член"
+        ,emotionType: "Емоция"
+        ,happenedNote: "Какво се случи?"
+        ,helpedNote: "Какво ти помогна?"
+        ,needsNote: "От какво имаш нужда?"
+        ,wantToTalk: "Искаш ли да поговорим?"
+        ,saveEmotion: "Запази емоция"
+        ,noEmotions: "Все още няма споделени емоции."
+        ,togetherTitle: "Идея за дейност"
+        ,togetherCategory: "Категория"
+        ,togetherDuration: "Продължителност (минути)"
+        ,saveTogether: "Запази дейност"
+        ,noTogether: "Все още няма дейности."
+        ,privacyCenter: "Поверителност и данни"
+        ,privacyRequestType: "Тип заявка"
+        ,privacyRequestNote: "Бележка (по желание)"
+        ,submitPrivacyRequest: "Изпрати заявка"
+        ,privacyExport: "Експорт на моите данни"
+        ,privacyRequests: "Моите заявки"
+        ,noPrivacyRequests: "Няма изпратени заявки."
       };
 
   const familyId = useMemo(() => profile?.familyId, [profile]);
@@ -293,12 +356,15 @@ export default function ModuleScreen({ route }) {
         setProfile(loadedProfile);
 
         if (loadedProfile?.familyId) {
-          const [loadedFamily, loadedMembers, loadedQuestion, loadedAnswers, loadedMoments, loadedTimeline] = await Promise.all([
+          const [loadedFamily, loadedMembers, loadedQuestion, loadedAnswers, loadedMoments, loadedEmotions, loadedTogether, loadedPrivacyRequests, loadedTimeline] = await Promise.all([
             getFamilyMobile(loadedProfile.familyId),
             getFamilyMembersMobile(loadedProfile.familyId),
             getTodayQuestionMobile(questionLanguage),
             getFamilyAnswersMobile(loadedProfile.familyId),
             listMomentsMobile(loadedProfile.familyId),
+            listEmotionsMobile(loadedProfile.familyId),
+            listTogetherActivitiesMobile(loadedProfile.familyId),
+            listMyPrivacyRequestsMobile(),
             getTimelineMobile(loadedProfile.familyId)
           ]);
 
@@ -311,6 +377,9 @@ export default function ModuleScreen({ route }) {
           setTodayQuestion(loadedQuestion);
           setAnswers(Array.isArray(loadedAnswers) ? loadedAnswers : []);
           setMoments(Array.isArray(loadedMoments) ? loadedMoments : []);
+          setEmotions(Array.isArray(loadedEmotions) ? loadedEmotions : []);
+          setTogetherActivities(Array.isArray(loadedTogether) ? loadedTogether : []);
+          setPrivacyRequests(Array.isArray(loadedPrivacyRequests) ? loadedPrivacyRequests : []);
           setTimeline(Array.isArray(loadedTimeline) ? loadedTimeline : []);
         }
       } catch (err) {
@@ -476,6 +545,105 @@ export default function ModuleScreen({ route }) {
       setInfo(text.momentAdded);
     } catch (err) {
       setError(err.message || text.momentCreateFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onCreateEmotion() {
+    if (!familyId) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setInfo("");
+    try {
+      await createEmotionMobile({
+        familyId,
+        emotionType,
+        happenedNote: emotionHappened,
+        helpedNote: emotionHelped,
+        needsNote: emotionNeeds,
+        wantToTalk: emotionWantToTalk
+      });
+      const [nextEmotions, nextTimeline] = await Promise.all([
+        listEmotionsMobile(familyId),
+        getTimelineMobile(familyId)
+      ]);
+      setEmotions(Array.isArray(nextEmotions) ? nextEmotions : []);
+      setTimeline(Array.isArray(nextTimeline) ? nextTimeline : []);
+      setEmotionType("HAPPY");
+      setEmotionHappened("");
+      setEmotionHelped("");
+      setEmotionNeeds("");
+      setEmotionWantToTalk(false);
+    } catch (err) {
+      setError(err.message || text.loadFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onCreateTogetherActivity() {
+    if (!familyId || !togetherTitle.trim()) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setInfo("");
+    try {
+      await createTogetherActivityMobile({
+        familyId,
+        title: togetherTitle.trim(),
+        category: togetherCategory.trim(),
+        description: togetherDescription.trim(),
+        durationMinutes: Number(togetherDuration) || null
+      });
+      const [nextActivities, nextTimeline] = await Promise.all([
+        listTogetherActivitiesMobile(familyId),
+        getTimelineMobile(familyId)
+      ]);
+      setTogetherActivities(Array.isArray(nextActivities) ? nextActivities : []);
+      setTimeline(Array.isArray(nextTimeline) ? nextTimeline : []);
+      setTogetherTitle("");
+      setTogetherCategory("");
+      setTogetherDescription("");
+      setTogetherDuration("15");
+    } catch (err) {
+      setError(err.message || text.loadFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSubmitPrivacyRequest() {
+    setBusy(true);
+    setError("");
+    setInfo("");
+    try {
+      await createPrivacyRequestMobile({ requestType: privacyRequestType, note: privacyRequestNote });
+      const requests = await listMyPrivacyRequestsMobile();
+      setPrivacyRequests(Array.isArray(requests) ? requests : []);
+      setPrivacyRequestType("EXPORT_DATA");
+      setPrivacyRequestNote("");
+    } catch (err) {
+      setError(err.message || text.loadFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onExportPrivacyData() {
+    setBusy(true);
+    setError("");
+    setInfo("");
+    try {
+      const payload = await exportMyPrivacyDataMobile();
+      setInfo(JSON.stringify(payload));
+    } catch (err) {
+      setError(err.message || text.loadFailed);
     } finally {
       setBusy(false);
     }
@@ -656,6 +824,46 @@ export default function ModuleScreen({ route }) {
         <Text style={styles.rowText}>{text.user}: {profile ? `${profile.firstName} ${profile.lastName}` : "-"}</Text>
         <Text style={styles.rowText}>{text.email}: {profile?.email || "-"}</Text>
         <Text style={styles.rowText}>{text.family}: {profile?.familyName || family?.name || "-"}</Text>
+
+        <Text style={styles.cardTitle}>{text.privacyCenter}</Text>
+        <View style={styles.fileActionsRow}>
+          <Pressable onPress={onExportPrivacyData}>
+            <Text style={styles.fileAction}>{text.privacyExport}</Text>
+          </Pressable>
+        </View>
+        <View style={styles.timelineFilters}>
+          <Pressable
+            style={[styles.filterChip, privacyRequestType === "EXPORT_DATA" && styles.filterChipActive]}
+            onPress={() => setPrivacyRequestType("EXPORT_DATA")}
+          >
+            <Text style={[styles.filterChipText, privacyRequestType === "EXPORT_DATA" && styles.filterChipTextActive]}>{text.privacyExport}</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.filterChip, privacyRequestType === "DELETE_DATA" && styles.filterChipActive]}
+            onPress={() => setPrivacyRequestType("DELETE_DATA")}
+          >
+            <Text style={[styles.filterChipText, privacyRequestType === "DELETE_DATA" && styles.filterChipTextActive]}>{questionLanguage === "en" ? "Delete data" : "Изтриване на данни"}</Text>
+          </Pressable>
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder={text.privacyRequestNote}
+          value={privacyRequestNote}
+          onChangeText={setPrivacyRequestNote}
+          multiline
+        />
+        <Pressable style={[styles.primaryBtn, busy && styles.disabled]} onPress={onSubmitPrivacyRequest} disabled={busy}>
+          <Text style={styles.primaryBtnText}>{text.submitPrivacyRequest}</Text>
+        </Pressable>
+        <Text style={styles.itemTitle}>{text.privacyRequests}</Text>
+        {privacyRequests.length === 0 ? <Text style={styles.emptyText}>{text.noPrivacyRequests}</Text> : null}
+        {privacyRequests.slice(0, 3).map((request) => (
+          <View key={request.id || `${request.requestType}-${request.createdAt}`} style={styles.item}>
+            <Text style={styles.itemTitle}>{request.requestType}</Text>
+            <Text style={styles.rowText}>{request.note || "-"}</Text>
+            <Text style={styles.itemMeta}>{request.status} | {formatDate(request.createdAt, questionLanguage)}</Text>
+          </View>
+        ))}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
       </View>
@@ -792,6 +1000,83 @@ export default function ModuleScreen({ route }) {
           </View>
         ))}
         {filteredMoments.length === 0 ? <Text style={styles.emptyText}>{text.noMoments}</Text> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {info ? <Text style={styles.info}>{info}</Text> : null}
+      </View>
+    );
+  }
+
+  if (moduleKey === "emotions") {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{moduleTitles.emotions}</Text>
+        <View style={styles.timelineFilters}>
+          {[
+            ["HAPPY", questionLanguage === "en" ? "Happy" : "Радост"],
+            ["SAD", questionLanguage === "en" ? "Sad" : "Тъга"],
+            ["ANGRY", questionLanguage === "en" ? "Angry" : "Гняв"],
+            ["FEAR", questionLanguage === "en" ? "Fear" : "Страх"],
+            ["CALM", questionLanguage === "en" ? "Calm" : "Спокойствие"],
+            ["EXCITED", questionLanguage === "en" ? "Excited" : "Вълнение"]
+          ].map(([value, label]) => (
+            <Pressable
+              key={value}
+              style={[styles.filterChip, emotionType === value && styles.filterChipActive]}
+              onPress={() => setEmotionType(value)}
+            >
+              <Text style={[styles.filterChipText, emotionType === value && styles.filterChipTextActive]}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <TextInput style={styles.input} placeholder={text.happenedNote} value={emotionHappened} onChangeText={setEmotionHappened} multiline />
+        <TextInput style={styles.input} placeholder={text.helpedNote} value={emotionHelped} onChangeText={setEmotionHelped} multiline />
+        <TextInput style={styles.input} placeholder={text.needsNote} value={emotionNeeds} onChangeText={setEmotionNeeds} multiline />
+        <View style={styles.switchRow}>
+          <Text style={styles.rowText}>{text.wantToTalk}</Text>
+          <Switch value={emotionWantToTalk} onValueChange={setEmotionWantToTalk} />
+        </View>
+        <Pressable style={[styles.primaryBtn, busy && styles.disabled]} onPress={onCreateEmotion} disabled={busy || !familyId}>
+          <Text style={styles.primaryBtnText}>{text.saveEmotion}</Text>
+        </Pressable>
+        {emotions.length === 0 ? <Text style={styles.emptyText}>{text.noEmotions}</Text> : null}
+        {emotions.slice(0, 4).map((item) => (
+          <View key={item.id || `${item.authorId}-${item.createdAt}`} style={styles.item}>
+            <Text style={styles.itemTitle}>{item.emotionType}</Text>
+            <Text style={styles.rowText} numberOfLines={2}>{item.happenedNote || item.helpedNote || item.needsNote || text.noDetails}</Text>
+            <Text style={styles.itemMeta}>{item.authorName || text.memberFallback} | {formatDate(item.createdAt, questionLanguage)}</Text>
+          </View>
+        ))}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {info ? <Text style={styles.info}>{info}</Text> : null}
+      </View>
+    );
+  }
+
+  if (moduleKey === "together") {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{moduleTitles.together}</Text>
+        <TextInput style={styles.input} placeholder={text.togetherTitle} value={togetherTitle} onChangeText={setTogetherTitle} />
+        <TextInput style={styles.input} placeholder={text.togetherCategory} value={togetherCategory} onChangeText={setTogetherCategory} />
+        <TextInput style={styles.input} placeholder={text.description} value={togetherDescription} onChangeText={setTogetherDescription} multiline />
+        <TextInput
+          style={styles.input}
+          placeholder={text.togetherDuration}
+          value={togetherDuration}
+          onChangeText={setTogetherDuration}
+          keyboardType="numeric"
+        />
+        <Pressable style={[styles.primaryBtn, (busy || !familyId || !togetherTitle.trim()) && styles.disabled]} onPress={onCreateTogetherActivity} disabled={busy || !familyId || !togetherTitle.trim()}>
+          <Text style={styles.primaryBtnText}>{text.saveTogether}</Text>
+        </Pressable>
+        {togetherActivities.length === 0 ? <Text style={styles.emptyText}>{text.noTogether}</Text> : null}
+        {togetherActivities.slice(0, 4).map((item) => (
+          <View key={item.id || `${item.authorId}-${item.createdAt}`} style={styles.item}>
+            <Text style={styles.itemTitle}>{item.title}</Text>
+            <Text style={styles.rowText} numberOfLines={2}>{item.description || text.noDescription}</Text>
+            <Text style={styles.itemMeta}>{item.category || "-"} | {item.durationMinutes || 0} min | {item.authorName || text.memberFallback}</Text>
+          </View>
+        ))}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {info ? <Text style={styles.info}>{info}</Text> : null}
       </View>

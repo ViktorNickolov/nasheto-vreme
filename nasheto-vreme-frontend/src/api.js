@@ -238,6 +238,43 @@ export function listMoments(familyId) {
   return api(`/moments?familyId=${familyId}`);
 }
 
+export function createEmotion(payload) {
+  return api("/emotions", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listEmotions(familyId) {
+  return api(`/emotions?familyId=${familyId}`);
+}
+
+export function createTogetherActivity(payload) {
+  return api("/together-activities", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listTogetherActivities(familyId) {
+  return api(`/together-activities?familyId=${familyId}`);
+}
+
+export function createPrivacyRequest(payload) {
+  return api("/privacy/requests", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listMyPrivacyRequests() {
+  return api("/privacy/requests/me");
+}
+
+export function exportMyPrivacyData() {
+  return api("/privacy/export/me");
+}
+
 export async function uploadImage(familyId, file, allowAuthRetry = true) {
   const formData = new FormData();
   formData.append("familyId", String(familyId));

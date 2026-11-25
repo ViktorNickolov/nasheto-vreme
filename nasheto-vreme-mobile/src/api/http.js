@@ -214,6 +214,43 @@ export function createMomentMobile(payload) {
   });
 }
 
+export function createEmotionMobile(payload) {
+  return request("/emotions", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listEmotionsMobile(familyId) {
+  return request(`/emotions?familyId=${familyId}`);
+}
+
+export function createTogetherActivityMobile(payload) {
+  return request("/together-activities", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listTogetherActivitiesMobile(familyId) {
+  return request(`/together-activities?familyId=${familyId}`);
+}
+
+export function createPrivacyRequestMobile(payload) {
+  return request("/privacy/requests", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listMyPrivacyRequestsMobile() {
+  return request("/privacy/requests/me");
+}
+
+export function exportMyPrivacyDataMobile() {
+  return request("/privacy/export/me");
+}
+
 export function getTimelineMobile(familyId, type = "ALL", limit = 20) {
   return request(`/timeline?familyId=${familyId}&type=${type}&limit=${limit}`);
 }

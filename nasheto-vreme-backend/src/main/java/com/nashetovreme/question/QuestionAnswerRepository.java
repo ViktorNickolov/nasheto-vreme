@@ -8,5 +8,7 @@ public interface QuestionAnswerRepository extends JpaRepository<QuestionAnswer, 
     List<QuestionAnswer> findByFamilyIdOrderByCreatedAtDesc(Long familyId);
 
     long countByFamilyId(Long familyId);
+
+    long countByFamilyIdAndAuthorId(Long familyId, Long authorId);
 }
 
